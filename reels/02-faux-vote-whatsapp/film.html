@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Jimmy Décrypte — Le faux vote WhatsApp</title>
+<style>
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-700.woff2);font-weight:700}
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-500.woff2);font-weight:500}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-400.woff2);font-weight:400}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-600.woff2);font-weight:600}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-800.woff2);font-weight:800}
+html,body{margin:0;background:#071B3A}canvas{display:block;width:540px;height:960px}
+</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script src="timeline.js"></script>
+<script src="../lib/kit.js"></script>
+<script>
+const CODE = 'K7P4-9QXM';
+
+// ---------- small UI pieces ----------
+function avatar(X, Y, r, letter, col = BLUE) { x.fillStyle = col; x.beginPath(); x.arc(X, Y, r, 0, 6.28); x.fill(); txt(letter, X, Y + 2, r * 1.05, WHITE, 700); }
+function tapRing(t, t0, X, Y) { const k = pr(t, t0, t0 + .5); if (k > 0 && k < 1) { x.strokeStyle = rgba(WHITE, 1 - k); x.lineWidth = 6; x.beginPath(); x.arc(X, Y, 26 + 80 * eo(k), 0, 6.28); x.stroke(); x.fillStyle = rgba(WHITE, .25 * (1 - k)); x.beginPath(); x.arc(X, Y, 34, 0, 6.28); x.fill(); } }
+function laptopIcon(X, Y, s, col) { x.save(); x.translate(X, Y); x.scale(s, s); x.strokeStyle = col; x.lineWidth = 6; x.lineJoin = 'round'; rr(-40, -30, 80, 52, 6); x.stroke(); x.beginPath(); x.moveTo(-55, 30); x.lineTo(55, 30); x.stroke(); x.restore(); }
+function lines(X, Y, w, n, col, gap = 16) { x.fillStyle = col; for (let i = 0; i < n; i++) { rr(X, Y + i * gap, w * (i === n - 1 ? .6 : 1), 8, 4); x.fill(); } }
+function dancer(X, Y, s) { x.save(); x.translate(X, Y); x.scale(s, s); x.fillStyle = WHITE; x.beginPath(); x.arc(0, -40, 16, 0, 6.28); x.fill();
+  x.strokeStyle = WHITE; x.lineWidth = 10; x.lineCap = 'round'; x.beginPath(); x.moveTo(0, -22); x.lineTo(4, 14); x.moveTo(0, -14); x.lineTo(-30, -38); x.moveTo(0, -14); x.lineTo(30, -30);
+  x.moveTo(4, 14); x.lineTo(-18, 46); x.moveTo(4, 14); x.lineTo(34, 30); x.stroke(); x.fillStyle = rgba(LIGHT, .9); x.beginPath(); x.moveTo(-6, 4); x.lineTo(16, 4); x.lineTo(26, 24); x.lineTo(-16, 24); x.fill(); x.restore(); }
+
+// ---------- phone screens (448 x 948) ----------
+function chatHeader(w, name, sub, col = BLUE) { x.fillStyle = '#0B2550'; x.fillRect(0, 0, w, 180); statusBar(w, '18:32');
+  x.strokeStyle = WHITE; x.lineWidth = 5; x.beginPath(); x.moveTo(52, 118); x.lineTo(36, 132); x.lineTo(52, 146); x.stroke();
+  avatar(104, 132, 30, name[0], col); txt(name, 150, 120, 30, WHITE, 700, 'SG', 'left'); txt(sub, 150, 152, 20, rgba(ICE, .65), 400, 'IN', 'left'); }
+function scrChat(t, w, h) {
+  screenBg(w, h, '#0A2148'); chatHeader(w, 'Julie', 'en ligne', '#2E8B6E');
+  txt('Aujourd’hui', w / 2, 220, 18, rgba(ICE, .5), 600, 'IN');
+  const k = back(cl(pr(t, T.msg, T.msg + .5))); if (k <= 0) return;
+  x.save(); x.translate(24, 250); x.scale(k, k);
+  x.fillStyle = '#163A72'; rr(0, 0, 380, 330, 26); x.fill();
+  ['Coucou ! Tu peux voter', 'pour la petite Léa ?', 'Ça l’aiderait beaucoup'].forEach((l, i) => txt(l, 22, 40 + i * 36, 25, WHITE, 400, 'IN', 'left'));
+  x.fillStyle = rgba(WHITE, .1); rr(14, 160, 352, 150, 18); x.fill(); x.fillStyle = rgba(LIGHT, .35); rr(14, 160, 110, 150, 18); x.fill(); dancer(69, 240, .8);
+  txt('Vote pour Léa', 140, 200, 24, WHITE, 700, 'IN', 'left'); txt('Concours de danse', 140, 234, 20, rgba(ICE, .75), 400, 'IN', 'left'); txt('lien ›', 140, 276, 20, LIGHT, 600, 'IN', 'left');
+  txt('18:31', 360, 150, 16, rgba(ICE, .5), 400, 'IN', 'right'); x.restore();
+}
+function scrVote(t, w, h) {
+  x.fillStyle = ICE; x.fillRect(0, 0, w, h); x.fillStyle = '#E3007E'; x.fillRect(0, 0, w, 200); statusBar(w, '18:33');
+  txt('CONCOURS JEUNES TALENTS', w / 2, 118, 22, WHITE, 800, 'IN', 'center', 2); txt('Danse · Finale régionale', w / 2, 156, 22, rgba(WHITE, .85), 400, 'IN');
+  x.fillStyle = WHITE; rr(30, 230, w - 60, 400, 30); x.fill(); x.fillStyle = '#F3A6CF'; rr(30, 230, w - 60, 220, 30); x.fill(); dancer(w / 2, 345, 1.6);
+  txt('Léa, 12 ans', w / 2, 490, 34, NIGHT, 800, 'IN'); x.fillStyle = rgba(NIGHT, .1); rr(70, 540, w - 140, 16, 8); x.fill(); x.fillStyle = '#E3007E'; rr(70, 540, (w - 140) * .78, 16, 8); x.fill();
+  txt('« Chaque vote compte ! »', w / 2, 595, 22, rgba(NIGHT, .6), 400, 'IN');
+  const bp = pr(t, T.tapVote - .05, T.tapVote + .15); x.save(); x.translate(w / 2, 720); x.scale(1 - .05 * Math.sin(bp * Math.PI), 1 - .05 * Math.sin(bp * Math.PI));
+  x.fillStyle = '#E3007E'; rr(-(w - 80) / 2, -46, w - 80, 92, 46); x.fill(); txt('Voter pour Léa', 0, 2, 32, WHITE, 800, 'IN'); x.restore();
+  // number sheet
+  const s = eo(pr(t, T.tapVote + .1, T.tapVote + .5)); if (s <= 0) return;
+  x.fillStyle = rgba(NIGHT, .45 * s); x.fillRect(0, 0, w, h);
+  x.save(); x.translate(0, (1 - s) * 600); x.fillStyle = WHITE; rr(0, h - 560, w, 600, 36); x.fill();
+  if (t < T.code) {
+    txt('Pour valider ton vote,', w / 2, h - 480, 28, NIGHT, 800, 'IN'); txt('entre ton numéro WhatsApp', w / 2, h - 440, 28, NIGHT, 800, 'IN');
+    x.strokeStyle = BLUE; x.lineWidth = 3; rr(40, h - 380, w - 80, 84, 18); x.stroke();
+    const full = '+33 6 12 •• •• 42', n = Math.floor(full.length * pr(t, T.numStart, T.numEnd));
+    txt(full.slice(0, n) + (Math.floor(t * 3) % 2 && t < T.numEnd + .2 ? '|' : ''), 64, h - 338, 32, NIGHT, 600, 'IN', 'left');
+    const bp2 = pr(t, T.tapNum - .05, T.tapNum + .15); x.fillStyle = BLUE; rr(40 + 6 * Math.sin(bp2 * Math.PI), h - 250, w - 80 - 12 * Math.sin(bp2 * Math.PI), 88, 44); x.fill(); txt('Recevoir mon code', w / 2, h - 205, 30, WHITE, 800, 'IN');
+  } else {
+    txt('Ton code de vote', w / 2, h - 480, 28, rgba(NIGHT, .7), 600, 'IN');
+    const k = pr(t, T.code, T.code + .9); x.fillStyle = rgba(BLUE, .1); rr(40, h - 430, w - 80, 120, 22); x.fill();
+    txt(scramble(CODE, k, 3 + Math.floor(t * 14)), w / 2, h - 368, 56, NIGHT, 700, 'SG', 'center', 6);
+    ['Saisis-le dans WhatsApp', 'pour confirmer ton vote.'].forEach((l, i) => txt(l, w / 2, h - 255 + i * 38, 26, NIGHT, 600, 'IN'));
+    txt('Valable 3 minutes', w / 2, h - 150, 20, '#E3007E', 600, 'IN');
+  }
+  x.restore();
+}
+function scrLink(t, w, h) {
+  screenBg(w, h, '#0A2148'); statusBar(w, '18:34'); txt('Associer un appareil', w / 2, 140, 32, WHITE, 700);
+  laptopIcon(w / 2, 280, 1.6, LIGHT);
+  ['Saisis le code affiché', 'sur l’autre appareil'].forEach((l, i) => txt(l, w / 2, 400 + i * 36, 26, rgba(ICE, .8), 400, 'IN'));
+  const typed = Math.floor(8 * pr(t, T.codeStart, T.codeEnd)), chars = CODE.replace('-', '');
+  for (let i = 0; i < 8; i++) { const X = 44 + i * 46 + (i > 3 ? 14 : 0), on = i < typed;
+    x.fillStyle = rgba(WHITE, on ? .16 : .07); rr(X, 490, 40, 60, 10); x.fill(); x.strokeStyle = i === typed && t < T.codeEnd ? LIGHT : rgba(WHITE, .2); x.lineWidth = 3; x.stroke();
+    if (on) txt(chars[i], X + 20, 522, 30, WHITE, 700); }
+  const bp = pr(t, T.tapOk - .05, T.tapOk + .15); x.fillStyle = typed === 8 ? OK : rgba(WHITE, .1); rr(40 + 6 * Math.sin(bp * Math.PI), 640, w - 80 - 12 * Math.sin(bp * Math.PI), 88, 44); x.fill(); txt('Confirmer', w / 2, 686, 30, WHITE, 800, 'IN');
+  const ok = eo(pr(t, T.tapOk + .15, T.tapOk + .5)); if (ok > 0) alpha(ok, () => { x.fillStyle = '#0A2148'; x.fillRect(0, 380, w, 400);
+    x.fillStyle = OK; x.beginPath(); x.arc(w / 2, 520, 56, 0, 6.28); x.fill(); check(w / 2 + 6, 516, 26, ok, WHITE); txt('Appareil associé', w / 2, 630, 32, WHITE, 700); });
+}
+function scrSettings(t, w, h) {
+  if (t < T.devices) {
+    screenBg(w, h, '#0A2148'); statusBar(w, '18:40'); txt('Paramètres', 40, 140, 40, WHITE, 700, 'SG', 'left');
+    ['Compte', 'Confidentialité', 'Appareils connectés', 'Discussions', 'Notifications', 'Aide'].forEach((l, i) => { const y = 230 + i * 96, hl = i === 2;
+      const p = hl ? pr(t, T.tapDevices - .05, T.tapDevices + .2) : 0; x.fillStyle = hl ? rgba(LIGHT, .12 + .25 * Math.sin(p * Math.PI) + .08 * Math.sin(t * 6)) : rgba(WHITE, .04); rr(24, y - 38, w - 48, 80, 18); x.fill();
+      if (hl) { x.strokeStyle = LIGHT; x.lineWidth = 3; x.stroke(); laptopIcon(68, y, .5, LIGHT); } else { x.fillStyle = rgba(WHITE, .25); x.beginPath(); x.arc(68, y, 16, 0, 6.28); x.fill(); }
+      txt(l, 108, y + 2, 26, hl ? WHITE : rgba(ICE, .75), hl ? 700 : 400, 'IN', 'left'); txt('›', w - 52, y, 30, rgba(ICE, .4), 400, 'IN'); });
+    return;
+  }
+  screenBg(w, h, '#0A2148'); statusBar(w, '18:40'); txt('Appareils connectés', w / 2, 140, 32, WHITE, 700);
+  x.fillStyle = OK; rr(40, 200, w - 80, 76, 38); x.fill(); txt('Associer un appareil', w / 2, 239, 24, WHITE, 800, 'IN');
+  txt('APPAREILS', 44, 330, 18, rgba(ICE, .5), 800, 'IN', 'left', 2);
+  x.fillStyle = rgba(WHITE, .06); rr(24, 360, w - 48, 110, 20); x.fill(); laptopIcon(80, 415, .55, ICE); txt('Mon ordinateur', 130, 400, 24, WHITE, 600, 'IN', 'left'); txt('Actif il y a 2 jours', 130, 434, 20, rgba(ICE, .6), 400, 'IN', 'left');
+  const gone = eio(pr(t, T.gone, T.gone + .45));
+  if (gone < 1) alpha(1 - gone, () => { x.save(); x.translate(gone * 400, 0); const p = .5 + .5 * Math.sin(t * 7);
+    x.fillStyle = rgba(DANGER, .14 + .08 * p); rr(24, 490, w - 48, 110, 20); x.fill(); x.strokeStyle = DANGER; x.lineWidth = 3; x.stroke(); laptopIcon(80, 545, .55, DANGER);
+    txt('Navigateur inconnu', 130, 530, 24, WHITE, 700, 'IN', 'left'); txt('Actif maintenant', 130, 564, 20, DANGER, 600, 'IN', 'left'); x.restore(); });
+  const s = eo(pr(t, T.sheet, T.sheet + .35)) * (1 - eo(pr(t, T.tapLogout + .15, T.tapLogout + .45)));
+  if (s > 0) { x.fillStyle = rgba('#020814', .5 * s); x.fillRect(0, 0, w, h); x.save(); x.translate(0, (1 - s) * 400);
+    x.fillStyle = '#10285A'; rr(0, h - 330, w, 360, 34); x.fill(); txt('Navigateur inconnu', w / 2, h - 270, 26, WHITE, 700, 'IN');
+    const bp = pr(t, T.tapLogout - .05, T.tapLogout + .15); x.fillStyle = DANGER; rr(40 + 6 * Math.sin(bp * Math.PI), h - 220, w - 80 - 12 * Math.sin(bp * Math.PI), 88, 44); x.fill(); txt('Déconnecter', w / 2, h - 175, 30, WHITE, 800, 'IN'); x.restore(); }
+  const toast = env(t, T.gone + .2, T.r2, .3, .3); if (toast > 0) alpha(toast, () => { x.fillStyle = OK; rr(40, h - 200, w - 80, 84, 42); x.fill(); txt('Appareil déconnecté', w / 2, h - 157, 26, WHITE, 800, 'IN'); });
+}
+
+// ---------- the attacker's laptop (no hoodie: just an unknown screen) ----------
+function laptop(t, X, Y, s, on, mode) {
+  x.save(); x.translate(X, Y); x.scale(s, s);
+  x.shadowColor = rgba(on ? DANGER : LIGHT, .45 * on + .1); x.shadowBlur = 80; x.fillStyle = '#0A1A38'; rr(-300, -200, 600, 380, 24); x.fill(); x.shadowBlur = 0;
+  x.strokeStyle = rgba(on ? DANGER : LIGHT, .4 + .5 * on); x.lineWidth = 4; x.stroke();
+  x.fillStyle = '#0F2550'; x.beginPath(); x.moveTo(-360, 190); x.lineTo(360, 190); x.lineTo(320, 220); x.lineTo(-320, 220); x.closePath(); x.fill();
+  x.save(); rr(-280, -180, 560, 340, 12); x.clip(); x.fillStyle = '#071733'; x.fillRect(-280, -180, 560, 340);
+  if (on > 0) alpha(on, () => {
+    x.fillStyle = rgba(DANGER, .18); x.fillRect(-280, -180, 560, 52); txt('Connecté au compte de : TOI', 0, -153, 22, WHITE, 700, 'IN');
+    const scroll = mode === 'read' ? (t * 60) % 72 : 0;
+    for (let i = 0; i < 6; i++) { const y = -100 + i * 72 - scroll; avatar(-240, y, 24, 'ABCDEFGH'[i], [BLUE, '#2E8B6E', '#8A4FD8', '#D8714F'][i % 4]);
+      x.fillStyle = rgba(WHITE, .8); rr(-200, y - 16, 120 + hash(i) * 80, 10, 5); x.fill(); x.fillStyle = rgba(WHITE, .3); rr(-200, y + 6, 260 + hash(i + 7) * 80, 8, 4); x.fill(); }
+    x.fillStyle = rgba(WHITE, .05); x.fillRect(80, -128, 200, 288);
+    if (mode === 'write') { const n = Math.floor(pr(t, T.write + .2, T.write + 1.6) * 34); x.fillStyle = BLUE; rr(100, 60, 170, 70, 14); x.fill();
+      font(16, 600, 'IN'); x.fillStyle = WHITE; x.textAlign = 'left'; const m = 'Coucou ! Tu peux voter pour…'.slice(0, n); x.fillText(m.slice(0, 18), 112, 86); x.fillText(m.slice(18), 112, 110); }
+  });
+  x.restore();
+  alpha(on, () => txt('APPAREIL INCONNU', 0, 260, 26, DANGER, 700, 'SG', 'center', 4));
+  x.restore();
+}
+
+// ---------- contact network (the snowball) ----------
+const NODES = (() => { const r = mulberry(77), out = [{ x: 540, y: 1180, p: -1, g: 0, t: 0 }];
+  for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + .3; out.push({ x: 540 + Math.cos(a) * 250, y: 1180 + Math.sin(a) * 250, p: 0, g: 1, t: .2 + i * .12 }); }
+  for (let i = 1; i <= 6; i++) for (let j = 0; j < 3; j++) { const a = (i - 1) / 6 * 6.28 + .3 + (j - 1) * .33, d = 470 + r() * 60; out.push({ x: 540 + Math.cos(a) * d, y: 1180 + Math.sin(a) * d * 1.05, p: i, g: 2, t: out[i].t + .6 + r() * .5 }); }
+  const n2 = out.length; for (let i = 7; i < n2; i++) for (let j = 0; j < 2; j++) { const a = Math.atan2(out[i].y - 1180, out[i].x - 540) + (j - .5) * .22, d = 690 + r() * 120; out.push({ x: 540 + Math.cos(a) * d, y: 1180 + Math.sin(a) * d * 1.05, p: i, g: 3, t: out[i].t + .5 + r() * .5 }); }
+  return out; })();
+function network(t, t0, a) {
+  const lt = t - t0;
+  x.save(); x.translate(540, 1240); x.scale(.82, .82); x.translate(-540, -1180); // keep clear of the title zone
+  alpha(a, () => {
+    for (const n of NODES) if (n.p >= 0) { const p = NODES[n.p], k = cl((lt - n.t + .5) / .5); if (k <= 0) continue;
+      x.strokeStyle = rgba(k >= 1 ? DANGER : LIGHT, .35); x.lineWidth = 3; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(lerp(p.x, n.x, k), lerp(p.y, n.y, k)); x.stroke();
+      if (k < 1) { const mx = lerp(p.x, n.x, k), my = lerp(p.y, n.y, k); x.fillStyle = WHITE; rr(mx - 14, my - 10, 28, 20, 4); x.fill(); } }
+    for (const n of NODES) { const k = cl((lt - n.t) / .3); const r = n.g === 0 ? 46 : 30 - n.g * 4, infected = lt > n.t;
+      x.fillStyle = infected ? rgba(DANGER, .25 + .15 * Math.sin(t * 6 + n.x)) : rgba(LIGHT, .15); x.beginPath(); x.arc(n.x, n.y, r + 10 * back(k) * (1 - k * .6), 0, 6.28); x.fill();
+      x.fillStyle = infected ? DANGER : '#1B3F7A'; x.beginPath(); x.arc(n.x, n.y, r, 0, 6.28); x.fill();
+      if (n.g === 0) txt('TOI', n.x, n.y + 2, 26, WHITE, 700); }
+  });  x.restore();
+}
+
+// ---------- camera keyframes [t, x, y, zoom] ----------
+const CAM = [[0, 0, 0, 1.0], [4, 0, 0, 1.04], [10, 0, 0, 1], [11.2, 0, 40, 1.06], [14.8, 0, 120, 1.12], [16.2, 0, 60, 1.1], [18.9, 0, 40, 1.14], [19.1, 0, 40, 1.22], [21.9, 0, 0, 1], [30.5, 0, 0, 1], [33, 0, 60, 1.08], [35.2, 0, 0, 1], [46, 0, 0, 1.05]];
+
+function renderAt(t) {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none';
+  const cam = camAt(t, CAM); background(t, cam);
+
+  // ===== HOOK (0–4): the message from a friend
+  if (t < T.s1 + .5) {
+    const a = 1 - eio(pr(t, T.s1 - .2, T.s1 + .4)), rise = eo(pr(t, 0, .8));
+    alpha(a, () => withCam(cam, 1, () => phone(t, scrChat, { s: lerp(.8, .92, rise), dy: 120 + (1 - rise) * 500, tilt: (1 - rise) * .3 + Math.sin(t * .8) * .03 })));
+    kinetic('Ce message vient d’un proche.', 540, 300, 62, t, T.hook1, WHITE, { out: T.s1 + .1 });
+    kinetic('C’est une arnaque.', 540, 395, 84, t, T.hook2, WHITE, { hl: [2], under: true, out: T.s1 + .1 });
+    const b = back(cl(pr(t, T.badge, T.badge + .4))); if (b > 0) alpha(1 - pr(t, T.s1 - .2, T.s1 + .1), () => { x.save(); x.translate(540, 500); x.scale(b, b);
+      x.fillStyle = DANGER; rr(-250, -32, 500, 64, 32); x.fill(); x.fillStyle = WHITE; x.beginPath(); x.arc(-212, 0, 9 + 3 * Math.sin(t * 10), 0, 6.28); x.fill();
+      txt('ALERTE · 27 OCT. 2026', 16, 2, 30, WHITE, 700, 'SG', 'center', 2); x.restore(); });
+  }
+
+  // ===== S1 WHAT HAPPENED (4–10): newsroom card + pretexts
+  if (t > T.s1 - .3 && t < T.s2 + .4) {
+    const a = env(t, T.s1 - .2, T.s2 + .3, .4, .45);
+    alpha(a, () => {
+      const k = eo(pr(t, T.head, T.head + .7));
+      x.save(); x.translate(0, (1 - k) * 80); alpha(k, () => {
+        x.fillStyle = rgba(WHITE, .06); rr(80, 470, 920, 470, 40); x.fill(); x.strokeStyle = rgba(LIGHT, .35); x.lineWidth = 2; x.stroke();
+        x.fillStyle = LIGHT; rr(80, 470, 12, 470, 6); x.fill();
+        txt('EN CE MOMENT', 140, 540, 26, LIGHT, 700, 'SG', 'left', 4);
+        ['Une arnaque au faux vote', 'se propage sur WhatsApp.'].forEach((l, i) => txt(l, 140, 620 + i * 76, 60, WHITE, 700, 'SG', 'left'));
+        txt('Elle vole des comptes, de proche en proche.', 140, 800, 34, rgba(ICE, .85), 400, 'IN', 'left');
+      }); x.restore();
+      [[T.src1, 'Gendarmerie nationale · 26/10'], [T.src2, 'Cybermalveillance.gouv.fr · 27/10']].forEach(([tt, s], i) => { const kk = back(cl(pr(t, tt, tt + .4))); if (kk <= 0) return;
+        font(28, 600, 'IN'); const w = x.measureText(s).width + 70;
+        x.save(); x.translate(110 + w / 2, 1010 + i * 84); x.scale(kk, kk); x.fillStyle = rgba(LIGHT, .14); rr(-w / 2, -32, w, 64, 32); x.fill(); x.strokeStyle = LIGHT; x.lineWidth = 2; x.stroke();
+        check(-w / 2 + 34, 0, 11, 1, LIGHT); txt(s, 14, 1, 28, WHITE, 600, 'IN'); x.restore(); });
+      kinetic('Le piège : un faux vote', 540, 300, 64, t, T.trap, WHITE, { hl: [3, 4] });
+      [[T.tag1, 'concours de danse', -230, 1300, -.06], [T.tag2, 'bourse d’études', 220, 1390, .05], [T.tag3, 'aider un enfant', -160, 1490, .03]].forEach(([tt, s, dx, y, rot]) => {
+        const kk = back(cl(pr(t, tt, tt + .45))); if (kk <= 0) return; font(38, 700, 'SG'); const w = x.measureText(s).width + 70;
+        x.save(); x.translate(540 + dx, y + Math.sin(t * 1.5 + dx) * 8); x.rotate(rot); x.scale(kk, kk); x.fillStyle = '#E3007E'; rr(-w / 2, -40, w, 80, 22); x.fill(); txt(s, 0, 2, 38, WHITE, 700); x.restore(); });
+    });
+  }
+
+  // ===== S2 DEMO (10–22): link → vote page → number → code → "associate a device" → reveal
+  if (t > T.s2 - .3 && t < T.s3 + .4) {
+    const a = env(t, T.s2 - .25, T.s3 + .3, .45, .45), rev = eio(pr(t, T.reveal, T.reveal + 1.2));
+    alpha(a, () => {
+      withCam(cam, 1, () => {
+        phone(t, (tt, w, h) => {
+          if (tt < T.page) scrChat(tt, w, h);
+          else if (tt < T.waNotif + .35) { scrVote(tt, w, h); if (tt > T.waNotif) alpha(eo(pr(tt, T.waNotif, T.waNotif + .35)), () => scrLink(tt, w, h)); }
+          else scrLink(tt, w, h);
+        }, { s: 1, dx: rev * 230, dy: 40 + rev * 140, tilt: -rev * .25 + Math.sin(t * .6) * .03, rot: rev * .05 });
+        // phone-local tap points (phone centre 540,1120)
+        tapRing(t, T.tapLink, 480, 1120 - 474 + 250 + 276);
+        tapRing(t, T.tapVote, 540, 1120 - 474 + 720);
+        tapRing(t, T.tapNum, 540, 1120 - 474 + 948 - 205);
+        tapRing(t, T.tapOk, 540, 1120 - 474 + 686);
+      });
+      // the reveal: an unknown laptop lights up, linked to the phone
+      if (rev > 0) { const on = eo(pr(t, T.reveal + .3, T.reveal + .9));
+        alpha(rev, () => { laptop(t, 300 - (1 - rev) * 200, 1420, .72, on, 'idle');
+          x.strokeStyle = rgba(DANGER, .8); x.lineWidth = 4; x.setLineDash([14, 12]); x.lineDashOffset = -t * 60; x.beginPath(); x.moveTo(470, 1360); x.quadraticCurveTo(620, 1300, 700, 1180); x.stroke(); x.setLineDash([]); }); }
+      kinetic('Un lien pour voter…', 540, 300, 62, t, T.link, WHITE, { out: T.numStart });
+      kinetic('…ton numéro…', 540, 300, 62, t, T.numStart + .1, WHITE, { out: T.code });
+      kinetic('…puis un « code de vote ».', 540, 300, 62, t, T.code + .1, WHITE, { hl: [3, 4, 5], out: T.waNotif + .2 });
+      kinetic('À saisir dans WhatsApp.', 540, 300, 62, t, T.waNotif + .3, WHITE, { out: T.reveal });
+      kinetic('Ce n’était pas un vote.', 540, 290, 70, t, T.rev1, WHITE, { out: T.s3 + .1 });
+      kinetic('Tu viens d’associer SON appareil', 540, 390, 52, t, T.rev2, ICE, { w: 600, fam: 'IN', hl: [4], out: T.s3 + .1 });
+      kinetic('à TON compte.', 540, 455, 52, t, T.rev2 + .35, ICE, { w: 600, fam: 'IN', hl: [1], out: T.s3 + .1 });
+    });
+  }
+
+  // ===== S3 CONSEQUENCES (22–30.5): read, write, ask money, snowball
+  if (t > T.s3 - .3 && t < T.s4 + .4) {
+    const a = env(t, T.s3 - .2, T.s4 + .3, .4, .45), netK = eio(pr(t, T.net - .3, T.net + .5));
+    alpha(a, () => {
+      alpha(1 - netK, () => { laptop(t, 540, 1050, 1.25, 1, t < T.write ? 'read' : 'write');
+        const m = back(cl(pr(t, T.ask, T.ask + .45))); if (m > 0) { x.save(); x.translate(540, 1500); x.scale(m, m); x.fillStyle = WHITE; rr(-380, -80, 760, 160, 30); x.fill();
+          txt('« Urgent, tu peux m’avancer de l’argent ?', -340, -26, 32, NIGHT, 600, 'IN', 'left'); txt('Je te rembourse demain. »', -340, 24, 32, NIGHT, 600, 'IN', 'left');
+          txt('envoyé en ton nom', 340, 104, 22, ICE, 600, 'IN', 'right'); x.restore(); } });
+      kinetic('Il lit tes conversations.', 540, 300, 64, t, T.read, WHITE, { out: T.write - .05 });
+      kinetic('Il écrit à tes proches,', 540, 300, 64, t, T.write, WHITE, { out: T.net - .1 });
+      kinetic('en ton nom.', 540, 390, 64, t, T.write + .3, WHITE, { hl: [1, 2], out: T.net - .1 });
+      if (netK > 0) network(t, T.net, netK);
+      kinetic('Et l’arnaque repart', 540, 300, 64, t, T.netTxt, WHITE, { out: T.who - .05 });
+      kinetic('vers leurs contacts.', 540, 390, 64, t, T.netTxt + .3, WHITE, { hl: [1, 2], out: T.who - .05 });
+      kinetic('Concerné : tout utilisateur', 540, 300, 60, t, T.who, WHITE, { out: T.s4 + .2 });
+      kinetic('de WhatsApp.', 540, 390, 60, t, T.who + .3, WHITE, { hl: [1], out: T.s4 + .2 });
+    });
+  }
+
+  // ===== S4 PROTECT (30.5–41.5): live walkthrough, then checklist
+  if (t > T.s4 - .3 && t < T.s5 + .4) {
+    const a = env(t, T.s4 - .2, T.s5 + .3, .4, .45), shrink = eio(pr(t, T.r1 - .4, T.r1 + .4));
+    alpha(a, () => {
+      withCam(cam, 1, () => phone(t, scrSettings, { s: lerp(1, .55, shrink), dy: lerp(80, 470, shrink), dx: 0, tilt: Math.sin(t * .7) * .03 }));
+      withCam(cam, 1, () => { tapRing(t, T.tapDevices, 540, 1160 - 474 + 422); tapRing(t, T.tapUnknown, 540, 1160 - 474 + 545); tapRing(t, T.tapLogout, 540, 1160 - 474 + 948 - 175); });
+      kinetic('Vérifie maintenant :', 540, 300, 64, t, T.settings - .3, WHITE, { out: T.r1 - .3 });
+      kinetic('Paramètres › Appareils connectés', 540, 390, 44, t, T.settings + .2, LIGHT, { w: 600, fam: 'IN', out: T.r1 - .3 });
+      const steps = [[T.r1, 'Aucun code ne sert à « voter ».'], [T.r2, 'Déconnecte tout appareil inconnu.'], [T.r3, 'Active la vérification en 2 étapes.'], [T.r4, 'Préviens tes proches autrement.'], [T.r5, 'Piraté ? cybermalveillance.gouv.fr']];
+      steps.forEach(([tt, s], i) => { const k = eo(pr(t, tt, tt + .5)); if (k <= 0) return; const y = 280 + i * 128;
+        alpha(k, () => { x.save(); x.translate((1 - k) * 90, 0); x.fillStyle = rgba(WHITE, .07); rr(80, y - 52, 920, 104, 30); x.fill();
+          x.fillStyle = i === 4 ? DANGER : LIGHT; x.beginPath(); x.arc(140, y, 30, 0, 6.28); x.fill(); i === 4 ? txt('!', 140, y + 2, 36, WHITE, 700) : check(140, y, 12, pr(t, tt + .1, tt + .5), NIGHT);
+          txt(s, 196, y + 2, 42, WHITE, 600, 'IN', 'left'); x.restore(); }); });
+    });
+  }
+
+  // ===== S5 END (41.5–46)
+  if (t > T.s5 - .2) {
+    const a = eo(pr(t, T.s5 - .1, T.s5 + .4));
+    alpha(a, () => {
+      network(t + 3, T.s5 - 10, .25);
+      x.fillStyle = rgba(NIGHT, .6); x.fillRect(0, 0, W, H);
+      const k = back(cl(pr(t, T.end1, T.end1 + .6)));
+      x.save(); x.translate(540, 720); x.scale(k, k);
+      txt('UN CODE', 0, -150, 120, WHITE, 700, 'SG', 'center', 4); txt('WHATSAPP', 0, -30, 120, LIGHT, 700, 'SG', 'center', 4);
+      txt('ne sert jamais', 0, 90, 64, WHITE, 500, 'SG'); txt('à voter.', 0, 165, 64, WHITE, 500, 'SG'); x.restore();
+      kinetic('Envoie-le dans ton groupe famille.', 540, 1030, 46, t, T.end2, ICE, { w: 600, fam: 'IN' });
+      const lk = pr(t, T.logo, T.logo + 1.0);
+      if (lk > 0) alpha(eo(cl(lk * 3)), () => { x.fillStyle = BLUE; rr(250, 1200, 580, 110, 26); x.fill(); txt(scramble('JIMMY DÉCRYPTE', lk, 5 + Math.floor(t * 15)), 540, 1257, 54, WHITE, 700, 'SG', 'center', 3);
+        txt('La cybersécurité, décryptée pour tout le monde.', 540, 1375, 30, rgba(ICE, .8), 400, 'IN');
+        txt('Sources : Cybermalveillance.gouv.fr, Gendarmerie nationale', 540, 1435, 24, rgba(ICE, .55), 400, 'IN'); });
+    });
+  }
+
+  for (const s of [T.s1, T.s2, T.s3, T.s4, T.s5]) streaks(t, s);
+  flash(t, T.reveal, .25, .35, DANGER);
+  if (t > T.reveal && t < T.reveal + .4) glitch(t, 1 - pr(t, T.reveal, T.reveal + .4), 300 + Math.floor(t * 30));
+  if (t > T.net - .1 && t < T.net + .15) glitch(t, .4, 700 + Math.floor(t * 30));
+  finish(t);
+  const fo = pr(t, T.DUR - .4, T.DUR); if (fo > 0) { x.fillStyle = rgba(NIGHT, fo); x.fillRect(0, 0, W, H); }
+}
+
+function renderCover() {
+  x.setTransform(1, 0, 0, 1, 0, 0); background(2, { x: 0, y: 0, z: 1 });
+  network(30, 22, .35);
+  phone(16.1, scrVote, { s: .7, dy: 330, tilt: -.1, rot: -.05 });
+  x.fillStyle = DANGER; rr(310, 250, 460, 70, 35); x.fill(); txt('ALERTE WHATSAPP', 540, 287, 34, WHITE, 700, 'SG', 'center', 3);
+  txt('Ne vote pas.', 540, 450, 120, WHITE, 700); txt('C’est un piège.', 540, 575, 92, LIGHT, 700);
+  x.fillStyle = BLUE; rr(350, 1640, 380, 70, 18); x.fill(); txt('JIMMY DÉCRYPTE', 540, 1676, 34, WHITE, 700, 'SG', 'center', 2);
+  finish(0);
+}
+
+window.ready = Promise.all(['700 10px SG', '500 10px SG', '400 10px IN', '600 10px IN', '800 10px IN'].map(f => document.fonts.load(f))).then(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.has('cover')) renderCover(); else renderAt(+(q.get('t') || 0));
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { renderAt(((performance.now() - t0) / 1000) % T.DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script></body></html>
