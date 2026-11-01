@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Jimmy Décrypte — Faux courrier des impôts</title>
+<style>
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-700.woff2);font-weight:700}
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-500.woff2);font-weight:500}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-400.woff2);font-weight:400}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-600.woff2);font-weight:600}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-800.woff2);font-weight:800}
+html,body{margin:0;background:#071B3A}canvas{display:block;width:540px;height:960px}
+</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script src="timeline.js"></script>
+<script src="../lib/kit.js"></script>
+<script>
+const PAPER = '#F5F8FD', INK = '#0B1F45', AMBER = '#FFB547';
+const WORDS = ['orange', 'cabine', 'rivière', 'tigre', 'sable', 'lampe', 'neige', 'pivot', 'jardin', 'olive', 'fusée', 'menthe']; // fictional
+const URL_FAKE = 'impots-portail-actifs.exemple';
+
+// ---------- paper props ----------
+function qr(X, Y, size, seed, col = INK) {
+  const n = 25, m = size / n, r = mulberry(seed); x.fillStyle = col;
+  const finder = (cx, cy) => { x.fillRect(X + cx * m, Y + cy * m, 7 * m, 7 * m); x.fillStyle = PAPER; x.fillRect(X + (cx + 1) * m, Y + (cy + 1) * m, 5 * m, 5 * m); x.fillStyle = col; x.fillRect(X + (cx + 2) * m, Y + (cy + 2) * m, 3 * m, 3 * m); };
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const inF = (i < 8 && j < 8) || (i > 16 && j < 8) || (i < 8 && j > 16); if (!inF && r() > .52) x.fillRect(X + i * m, Y + j * m, m + .5, m + .5); }
+  finder(0, 0); finder(18, 0); finder(0, 18);
+}
+function envelope(t, X, Y, s, open) {
+  x.save(); x.translate(X, Y); x.scale(s, s);
+  x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 60; x.fillStyle = PAPER; rr(-380, -230, 760, 460, 14); x.fill(); x.shadowBlur = 0;
+  x.fillStyle = rgba(INK, .08); rr(-120, -40, 400, 150, 10); x.fill();
+  lines2(-90, -10, 300, 4, rgba(INK, .35));
+  // flap
+  const f = 1 - 2 * eio(open); x.save(); x.translate(0, -230); x.scale(1, f); x.fillStyle = f > 0 ? '#E4EAF4' : '#D7DFEC';
+  x.beginPath(); x.moveTo(-380, 0); x.lineTo(0, 210); x.lineTo(380, 0); x.closePath(); x.fill(); x.restore();
+  txt('FINANCES PUBLIQUES', -340, 170, 24, INK, 800, 'IN', 'left', 2); x.fillStyle = INK; x.fillRect(-340, 192, 160, 4);
+  x.restore();
+}
+function lines2(X, Y, w, n, col, gap = 26) { x.fillStyle = col; for (let i = 0; i < n; i++) { rr(X, Y + i * gap, w * (i === n - 1 ? .55 : .9 + .1 * hash(i + X)), 9, 4); x.fill(); } }
+function stampMark(X, Y, s, txt1, col, rot = -.12) { x.save(); x.translate(X, Y); x.rotate(rot); x.scale(s, s); x.strokeStyle = col; x.lineWidth = 7; rr(-230, -52, 460, 104, 10); x.stroke();
+  x.lineWidth = 2; rr(-218, -40, 436, 80, 6); x.stroke(); txt(txt1, 0, 3, 46, col, 700, 'SG', 'center', 4); x.restore(); }
+function letter(t, X, Y, s, o = {}) {
+  x.save(); x.translate(X, Y); x.scale(s, s); x.rotate(o.rot || 0);
+  const w = 780, h = 1060;
+  x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 70; x.fillStyle = PAPER; rr(-w / 2, -h / 2, w, h, 10); x.fill(); x.shadowBlur = 0;
+  const L = -w / 2 + 60;
+  txt('FINANCES PUBLIQUES', L, -h / 2 + 70, 26, INK, 800, 'IN', 'left', 2); x.fillStyle = INK; x.fillRect(L, -h / 2 + 94, 170, 4);
+  txt('Service des actifs numériques', L, -h / 2 + 124, 20, rgba(INK, .6), 400, 'IN', 'left');
+  txt('Paris, le 28 septembre 2026', w / 2 - 60, -h / 2 + 70, 20, rgba(INK, .6), 400, 'IN', 'right');
+  const ap = i => o.times ? eo(pr(t, o.times[i], o.times[i] + .4)) : 1;
+  alpha(ap(0), () => txt('MISE EN DEMEURE', L, -h / 2 + 230, 50, '#B3122E', 700, 'SG', 'left', 2));
+  alpha(ap(1), () => { txt('Déclarez vos comptes et portefeuilles', L, -h / 2 + 310, 28, INK, 600, 'IN', 'left'); txt('crypto avant le 29 octobre.', L, -h / 2 + 348, 28, INK, 600, 'IN', 'left'); lines2(L, -h / 2 + 395, 600, 3, rgba(INK, .18)); });
+  alpha(ap(2), () => { txt('Amende : 750 € par compte non déclaré.', L, -h / 2 + 520, 28, INK, 800, 'IN', 'left'); lines2(L, -h / 2 + 560, 600, 2, rgba(INK, .18)); });
+  alpha(ap(3), () => { txt('Réf. : directive DAC8 · formulaire 3916-bis', L, -h / 2 + 650, 24, rgba(INK, .75), 600, 'IN', 'left');
+    qr(w / 2 - 300, h / 2 - 330, 230, 7); txt('Scannez ce QR code', L, h / 2 - 270, 26, INK, 800, 'IN', 'left'); txt('sécurisé pour régulariser', L, h / 2 - 234, 26, INK, 400, 'IN', 'left'); txt('votre situation.', L, h / 2 - 198, 26, INK, 400, 'IN', 'left'); });
+  if (o.stamp) alpha(o.stamp, () => stampMark(-140, h / 2 - 80, (1.25 - .25 * o.stamp) * .85, 'RECONSTITUTION', rgba(LIGHT, .9), -.06));
+  x.restore();
+}
+function callout(t, t0, L, X, Y, tx2, ty2, col = AMBER) {
+  const k = back(cl(pr(t, t0, t0 + .45))); if (k <= 1e-3) return; font(32, 700, 'SG'); const w = Math.max(...L.map(s => x.measureText(s).width)) + 44, hh = 36 + L.length * 38;
+  x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); x.moveTo(X, Y); x.lineTo(lerp(X, tx2, eo(cl(k))), lerp(Y, ty2, eo(cl(k)))); x.stroke(); x.fillStyle = col; x.beginPath(); x.arc(tx2, ty2, 9 * k, 0, 6.28); x.fill();
+  x.save(); x.translate(X, Y); x.scale(k, k); x.fillStyle = col; rr(-w / 2, -hh / 2, w, hh, 20); x.fill(); L.forEach((s, i) => txt(s, 0, (i - (L.length - 1) / 2) * 38 + 2, 32, NIGHT, 700)); x.restore();
+}
+
+// ---------- phone screens ----------
+function scrCamera(t, w, h) {
+  x.fillStyle = '#0A0F18'; x.fillRect(0, 0, w, h);
+  // the letter under the camera (out-of-focus paper + sharp QR)
+  x.fillStyle = '#DCE3EE'; x.fillRect(0, 140, w, h - 300); lines2(30, 180, 300, 3, rgba(INK, .15)); qr(w / 2 - 150, h / 2 - 180, 300, 7);
+  const lk = pr(t, T.lock, T.lock + .3), b = lerp(200, 170, eo(lk)), col = lk > 0 ? OK : WHITE;
+  x.strokeStyle = col; x.lineWidth = 8; x.lineCap = 'round';
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const cx = w / 2 + sx * b, cy = h / 2 - 30 + sy * b; x.beginPath(); x.moveTo(cx, cy - sy * 50); x.lineTo(cx, cy); x.lineTo(cx - sx * 50, cy); x.stroke(); }
+  if (lk <= 0) { const sy2 = h / 2 - 30 + Math.sin(t * 5) * 170; const g = x.createLinearGradient(0, sy2 - 30, 0, sy2 + 30); g.addColorStop(0, rgba(LIGHT, 0)); g.addColorStop(.5, rgba(LIGHT, .7)); g.addColorStop(1, rgba(LIGHT, 0)); x.fillStyle = g; x.fillRect(w / 2 - 190, sy2 - 30, 380, 60); }
+  statusBar(w, '10:24'); txt('QR CODE', w / 2, 120, 22, WHITE, 700, 'IN', 'center', 3);
+  const u = back(cl(pr(t, T.url, T.url + .4)));
+  if (u > 0) { x.save(); x.translate(w / 2, h - 170); x.scale(u, u); x.fillStyle = rgba(WHITE, .95); rr(-200, -50, 400, 100, 26); x.fill(); txt('Ouvrir le lien', 0, -14, 22, rgba(INK, .6), 600, 'IN'); txt(URL_FAKE, 0, 18, 22, BLUE, 700, 'IN'); x.restore(); }
+}
+function scrClone(t, w, h) {
+  x.fillStyle = PAPER; x.fillRect(0, 0, w, h); x.fillStyle = INK; x.fillRect(0, 0, w, 190); statusBar(w, '10:25');
+  x.fillStyle = rgba(WHITE, .1); rr(20, 74, w - 40, 40, 20); x.fill(); txt(URL_FAKE, w / 2, 95, 17, WHITE, 600, 'IN');
+  txt('Portail des actifs numériques', w / 2, 152, 24, WHITE, 800, 'IN');
+  txt('Finalisez votre déclaration :', 32, 238, 22, INK, 800, 'IN', 'left'); txt('saisissez votre phrase de récupération.', 32, 268, 20, rgba(INK, .75), 400, 'IN', 'left');
+  const n = Math.floor(12 * pr(t, T.words0, T.words1)), gone = pr(t, T.steal, T.steal + .6);
+  for (let i = 0; i < 12; i++) { const c = i % 2, r = Math.floor(i / 2), X = 28 + c * 200, Y = 310 + r * 74;
+    x.fillStyle = WHITE; rr(X, Y, 188, 60, 12); x.fill(); x.strokeStyle = i === n && n < 12 ? BLUE : rgba(INK, .15); x.lineWidth = 2; x.stroke();
+    txt(String(i + 1), X + 22, Y + 31, 18, rgba(INK, .45), 600, 'IN');
+    if (i < n) alpha(1 - gone, () => txt(WORDS[i], X + 44, Y + 31, 22, INK, 700, 'IN', 'left')); }
+  x.fillStyle = BLUE; rr(28, h - 150, w - 56, 84, 42); x.fill(); txt('Valider ma déclaration', w / 2, h - 107, 26, WHITE, 800, 'IN');
+}
+
+// ---------- wallet + attacker ----------
+function wallet(t, X, Y, s) {
+  const v = 8420 * (1 - eio(pr(t, T.drain, T.drainEnd))), empty = v < 1;
+  x.save(); x.translate(X, Y); x.scale(s, s);
+  x.shadowColor = rgba(empty ? DANGER : LIGHT, .4); x.shadowBlur = 60; x.fillStyle = '#0C2754'; rr(-260, -150, 520, 300, 36); x.fill(); x.shadowBlur = 0;
+  x.strokeStyle = rgba(empty ? DANGER : LIGHT, .7); x.lineWidth = 3; x.stroke();
+  txt('MON PORTEFEUILLE CRYPTO', -220, -96, 22, rgba(ICE, .7), 700, 'IN', 'left', 2);
+  txt(v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €', -220, 0, 72, empty ? DANGER : WHITE, 700, 'SG', 'left');
+  txt(empty ? 'Vidé. Sans recours.' : 'Solde', -220, 80, 28, empty ? DANGER : rgba(ICE, .6), 600, 'IN', 'left');
+  x.restore();
+}
+function thief(X, Y, k) { if (k <= 1e-3) return; x.save(); x.translate(X, Y); x.scale(k, k); x.fillStyle = rgba(DANGER, .2); x.beginPath(); x.arc(0, 0, 90, 0, 6.28); x.fill(); x.strokeStyle = DANGER; x.lineWidth = 4; x.stroke();
+  x.fillStyle = DANGER; for (let i = 0; i < 3; i++) { rr(-44, -38 + i * 28, 88, 20, 5); x.fill(); } x.restore(); txt('Serveur des escrocs', X, Y + 130, 26, DANGER, 700, 'SG'); }
+
+// ---------- camera ----------
+const CAM = [[0, 0, 0, 1.05], [4, 0, 0, 1], [10, 0, 0, 1], [15.8, 0, 120, 1.12], [16, 0, 0, 1], [21, 0, 0, 1], [24.5, 0, 40, 1.05], [24.7, 0, 40, 1.12], [26.5, 0, 0, 1], [46, 0, 0, 1.04]];
+
+function renderAt(t) {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none';
+  const cam = camAt(t, CAM); background(t, cam);
+
+  // ===== HOOK (0–4): the envelope lands, stamped
+  if (t < T.s1 + .5) {
+    const a = 1 - eio(pr(t, T.s1 - .2, T.s1 + .4)), k = eo(pr(t, T.env, T.env + .8));
+    alpha(a, () => withCam(cam, 1, () => { envelope(t, 540, lerp(-400, 1100, k), 1.15, 0);
+      const st = cl(pr(t, T.stamp0, T.stamp0 + .25)); if (st > 0) { const sh = st < 1 ? 0 : Math.max(0, 1 - (t - T.stamp0 - .25) * 4) * Math.sin(t * 80) * 6; stampMark(560 + sh, 1150, lerp(1.8, 1, ei(st)) * 1.1, 'MISE EN DEMEURE', DANGER); } }));
+    kinetic('Ce courrier « des impôts »', 540, 300, 64, t, T.hook1, WHITE, { out: T.s1 + .1 });
+    kinetic('peut vider ton portefeuille crypto.', 540, 390, 54, t, T.hook2, WHITE, { hl: [2, 3, 4], under: true, out: T.s1 + .1 });
+  }
+
+  // ===== S1 THE NEWS (4–10): one date, two stories
+  if (t > T.s1 - .3 && t < T.s2 + .4) {
+    const a = env(t, T.s1 - .2, T.s2 + .3, .4, .45);
+    alpha(a, () => {
+      const dk = back(cl(pr(t, T.date, T.date + .5))); x.save(); x.translate(540, 330); x.scale(dk, dk); x.fillStyle = BLUE; rr(-260, -50, 520, 100, 24); x.fill(); txt('29 OCTOBRE 2026', 0, 3, 48, WHITE, 700, 'SG', 'center', 3); x.restore();
+      // story 1: Binance
+      const b = eo(pr(t, T.binance, T.binance + .6)); alpha(b, () => { x.save(); x.translate((1 - b) * -200, 0);
+        x.fillStyle = rgba(WHITE, .06); rr(90, 470, 900, 420, 40); x.fill(); x.strokeStyle = rgba(LIGHT, .3); x.lineWidth = 2; x.stroke();
+        txt('BINANCE', 140, 540, 30, AMBER, 700, 'SG', 'left', 4); txt('Plus gros vol de cryptos', 140, 610, 46, WHITE, 700, 'SG', 'left'); txt('jamais enregistré.', 140, 668, 46, WHITE, 700, 'SG', 'left');
+        const f = 6.3 * eio(pr(t, T.bfig, T.bfig + .9)); txt('≈ ' + f.toFixed(1).replace('.', ',') + ' milliards $', 140, 770, 64, AMBER, 700, 'SG', 'left');
+        txt('Retraits suspendus, clients inquiets.', 140, 840, 30, rgba(ICE, .75), 400, 'IN', 'left'); x.restore(); });
+      // story 2: Police alert
+      const p = eo(pr(t, T.police, T.police + .6)); alpha(p, () => { x.save(); x.translate((1 - p) * 200, 0);
+        x.fillStyle = DANGER; rr(90, 940, 900, 360, 40); x.fill();
+        txt('LE MÊME JOUR, LA POLICE NATIONALE ALERTE', 140, 1010, 24, WHITE, 800, 'IN', 'left', 1.5);
+        ['Un faux courrier des impôts', 'vise les détenteurs', 'de cryptos.'].forEach((l, i) => txt(l, 140, 1085 + i * 62, 50, WHITE, 700, 'SG', 'left'));
+        x.restore(); });
+    });
+  }
+
+  // ===== S2 THE LETTER (10–21): anatomy, then the scan
+  if (t > T.s2 - .3 && t < T.s3 + .4) {
+    const a = env(t, T.s2 - .2, T.s3 + .3, .4, .45), toPhone = eio(pr(t, T.scan - .6, T.scan + .2));
+    alpha(a, () => {
+      withCam(cam, 1, () => {
+        alpha(1 - toPhone, () => { const o = eo(pr(t, T.open, T.open + .5));
+          if (t < T.letter + .3) envelope(t, 540, 1080, .95, o);
+          const lk = eo(pr(t, T.letter, T.letter + .6)); if (lk > 0) letter(t, lerp(540, 430, eo(pr(t, T.k[0] - .5, T.k[0]))), lerp(1300, 1080, lk), lerp(.6, .98, lk) - .18 * eo(pr(t, T.k[0] - .5, T.k[0])), { times: T.l, rot: (1 - lk) * .05, stamp: eo(pr(t, T.l[3] + .4, T.l[3] + .8)) });
+          callout(t, T.k[0], ['Urgence'], 900, 760, 526, 840);
+          callout(t, T.k[1], ['Menace', 'd’amende'], 900, 1000, 614, 1072);
+          callout(t, T.k[2], ['Vraies réf.', 'faux courrier'], 900, 1260, 582, 1176); });
+        if (toPhone > 0) alpha(toPhone, () => phone(t, scrCamera, { s: lerp(1.2, 1, toPhone), dy: 40, tilt: Math.sin(t * .8) * .03 }));
+      });
+      kinetic('Un faux courrier bien imité :', 540, 300, 56, t, T.s2 + .1, WHITE, { out: T.scan - .3 });
+      kinetic('Tu scannes le QR code…', 540, 300, 62, t, T.scan - .2, WHITE, { out: T.urlReveal });
+      kinetic('Ce n’est pas impots.gouv.fr.', 540, 300, 60, t, T.urlReveal, WHITE, { hl: [4], under: true, out: T.s3 + .1 });
+    });
+  }
+
+  // ===== S3 THE TRAP (21–31): seed phrase typed, stolen, wallet drained
+  if (t > T.s3 - .3 && t < T.s4 + .4) {
+    const a = env(t, T.s3 - .2, T.s4 + .3, .4, .45), mv = eio(pr(t, T.steal - .2, T.steal + .6));
+    alpha(a, () => {
+      withCam(cam, 1, () => phone(t, scrClone, { s: lerp(1, .74, mv), dx: lerp(0, 190, mv), dy: lerp(40, 330, mv), tilt: Math.sin(t * .7) * .03 }));
+      // words fly to the attacker
+      const TH = [820, 720];
+      if (t > T.steal) for (let i = 0; i < 12; i++) { const k = eio(pr(t, T.steal + i * .05, T.steal + i * .05 + .7)); if (k <= 0 || k >= 1) continue;
+        const sx = 540 + 190 - 224 * .74 + (28 + (i % 2) * 200 + 94) * .74, sy = 1080 + 330 - 474 * .74 + (310 + Math.floor(i / 2) * 74 + 30) * .74;
+        const X = lerp(sx, TH[0], k), Y = lerp(sy, TH[1], k) - Math.sin(k * Math.PI) * 120; font(26, 700, 'IN'); const w = x.measureText(WORDS[i]).width + 28;
+        x.fillStyle = rgba(AMBER, 1 - k * .3); rr(X - w / 2, Y - 22, w, 44, 12); x.fill(); txt(WORDS[i], X, Y + 1, 26, NIGHT, 700, 'IN'); }
+      thief(TH[0], TH[1], back(cl(pr(t, T.steal - .1, T.steal + .4))));
+      const wk = eo(pr(t, T.steal + .4, T.steal + 1)); if (wk > 0) alpha(wk, () => wallet(t, 330, 1000 + (1 - wk) * 60, .9));
+      if (t > T.drain && t < T.drainEnd + .3) for (let i = 0; i < 14; i++) { const d = ((t - T.drain) * 1.4 + i / 14) % 1; x.fillStyle = rgba(DANGER, .8 * Math.sin(d * Math.PI)); x.beginPath(); x.arc(lerp(400, TH[0], d), lerp(980, TH[1], d) - Math.sin(d * Math.PI) * 80, 8, 0, 6.28); x.fill(); }
+      kinetic('Il demande tes 12 mots secrets.', 540, 300, 58, t, T.site + .1, WHITE, { hl: [3, 4, 5], out: T.key1 - .1 });
+      kinetic('Ta phrase de récupération', 540, 300, 60, t, T.key1, WHITE, { out: T.s4 + .1 });
+      kinetic('= la clé de ton portefeuille.', 540, 385, 56, t, T.key1 + .3, WHITE, { hl: [2, 3], out: T.s4 + .1 });
+      kinetic('Qui l’a peut tout vider.', 540, 480, 48, t, T.key2, ICE, { w: 600, fam: 'IN', out: T.s4 + .1 });
+    });
+  }
+
+  // ===== S4 REFLEXES (31–41.5): each one printed and stamped
+  if (t > T.s4 - .3 && t < T.s5 + .4) {
+    const a = env(t, T.s4 - .2, T.s5 + .3, .35, .4);
+    const R = [['Ne scanne pas', 'le QR code.'], ['Tape toi-même', 'impots.gouv.fr', 'et vérifie ta messagerie sécurisée.'], ['Ta phrase de récupération', 'ne se donne JAMAIS.', 'Ni aux impôts, ni à personne.'], ['Déjà saisie ?', 'Transfère tes fonds', 'vers un nouveau portefeuille, vite.'], ['Signale-le', 'sur 17cyber.gouv.fr', 'puis porte plainte.']];
+    alpha(a, () => {
+      txt('LES BONS RÉFLEXES', 540, 290, 32, LIGHT, 700, 'SG', 'center', 6);
+      R.forEach((L, i) => {
+        const t0 = T.r[i], t1 = T.r[i + 1] ?? T.s5 + .2, k = eo(pr(t, t0, t0 + .45)), out = eio(pr(t, t1 - .3, t1 + .1)); if (k <= 0 || out >= 1) return;
+        x.save(); x.translate(540 + out * 900, 1000 + (1 - k) * 700); x.rotate((i % 2 ? .025 : -.02) + out * .2);
+        x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 60; x.fillStyle = PAPER; rr(-420, -400, 840, 800, 16); x.fill(); x.shadowBlur = 0;
+        txt(`${i + 1} / 5`, -360, -330, 28, rgba(INK, .5), 700, 'SG', 'left', 2);
+        txt(L[0], 0, -170, 58, INK, 700); txt(L[1], 0, -95, i === 2 ? 58 : 50, i === 2 ? '#B3122E' : BLUE, 700); if (L[2]) wrap(L[2], 700, 36, 600, 'IN').forEach((l, j) => txt(l, 0, -10 + j * 48, 36, rgba(INK, .75), 600, 'IN'));
+        const st = cl(pr(t, t0 + .45, t0 + .7)); if (st > 0) { x.save(); x.translate(0, 220); x.rotate(-.15); x.scale(lerp(1.8, 1, ei(st)), lerp(1.8, 1, ei(st))); x.globalAlpha *= st;
+          x.strokeStyle = i === 2 ? '#B3122E' : BLUE; x.lineWidth = 8; x.beginPath(); x.arc(0, 0, 90, 0, 6.28); x.stroke(); x.lineWidth = 3; x.beginPath(); x.arc(0, 0, 76, 0, 6.28); x.stroke(); check(8, 0, 34, 1, i === 2 ? '#B3122E' : BLUE); x.restore(); }
+        x.restore();
+      });
+    });
+  }
+
+  // ===== S5 END (41.5–46)
+  if (t > T.s5 - .2) {
+    const a = eo(pr(t, T.s5 - .1, T.s5 + .4));
+    alpha(a, () => {
+      alpha(.18, () => letter(t, 540, 1050, 1.1, { rot: -.04 }));
+      x.fillStyle = rgba(NIGHT, .62); x.fillRect(0, 0, W, H);
+      const k = back(cl(pr(t, T.end1, T.end1 + .6)));
+      x.save(); x.translate(540, 700); x.scale(k, k);
+      txt('Les impôts ne demandent', 0, -120, 66, WHITE, 700); txt('JAMAIS', 0, -10, 130, LIGHT, 700, 'SG', 'center', 6); txt('ta phrase de récupération.', 0, 100, 60, WHITE, 700); x.restore();
+      kinetic('Envoie-le à un proche qui a des cryptos.', 540, 1000, 42, t, T.end1 + .9, ICE, { w: 600, fam: 'IN' });
+      const lk = pr(t, T.logo, T.logo + 1.0);
+      if (lk > 0) alpha(eo(cl(lk * 3)), () => { x.fillStyle = BLUE; rr(250, 1170, 580, 110, 26); x.fill(); txt(scramble('JIMMY DÉCRYPTE', lk, 5 + Math.floor(t * 15)), 540, 1227, 54, WHITE, 700, 'SG', 'center', 3);
+        txt('La cybersécurité, décryptée pour tout le monde.', 540, 1345, 30, rgba(ICE, .8), 400, 'IN');
+        txt('Sources : Police nationale, Signal-Arnaques, Clubic, TRM Labs, CNN', 540, 1405, 22, rgba(ICE, .55), 400, 'IN'); });
+    });
+  }
+
+  for (const s of [T.s1, T.s2, T.s3, T.s4, T.s5]) streaks(t, s);
+  flash(t, T.urlReveal, .25, .3, DANGER);
+  if (t > T.urlReveal && t < T.urlReveal + .35) glitch(t, 1 - pr(t, T.urlReveal, T.urlReveal + .35), 300 + Math.floor(t * 30));
+  if (t > T.steal && t < T.steal + .35) glitch(t, 1 - pr(t, T.steal, T.steal + .35), 500 + Math.floor(t * 30));
+  finish(t);
+  const fo = pr(t, T.DUR - .4, T.DUR); if (fo > 0) { x.fillStyle = rgba(NIGHT, fo); x.fillRect(0, 0, W, H); }
+}
+
+function renderCover() {
+  x.setTransform(1, 0, 0, 1, 0, 0); background(2, { x: 0, y: 0, z: 1 });
+  letter(20, 540, 1260, .78, { rot: -.05, stamp: 1 });
+  x.fillStyle = DANGER; rr(260, 240, 560, 70, 35); x.fill(); txt('ARNAQUE PAR COURRIER', 540, 277, 32, WHITE, 700, 'SG', 'center', 3);
+  txt('Ne scanne pas', 540, 420, 100, WHITE, 700); txt('ce QR code.', 540, 535, 100, WHITE, 700);
+  txt('Il vise tes cryptos.', 540, 650, 60, LIGHT, 700);
+  x.fillStyle = BLUE; rr(350, 1700, 380, 70, 18); x.fill(); txt('JIMMY DÉCRYPTE', 540, 1736, 34, WHITE, 700, 'SG', 'center', 2);
+  finish(0);
+}
+
+window.ready = Promise.all(['700 10px SG', '500 10px SG', '400 10px IN', '600 10px IN', '800 10px IN'].map(f => document.fonts.load(f))).then(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.has('cover')) renderCover(); else renderAt(+(q.get('t') || 0));
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { renderAt(((performance.now() - t0) / 1000) % T.DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script></body></html>
