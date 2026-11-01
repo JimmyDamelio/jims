@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Jimmy Décrypte — Jeux mobiles et données</title>
+<style>
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-700.woff2);font-weight:700}
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-500.woff2);font-weight:500}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-400.woff2);font-weight:400}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-600.woff2);font-weight:600}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-800.woff2);font-weight:800}
+html,body{margin:0;background:#071B3A}canvas{display:block;width:540px;height:960px}
+</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script src="timeline.js"></script>
+<script src="../lib/kit.js"></script>
+<script>
+const AMBER = '#FFB547', GREEN = '#2BD47D';
+// Real App Store "Data Used to Track You" labels (read 01/11/2026, self-declared by the developer)
+const GAMES = [
+  { n: 'Coin Master', d: 'Moon Active', c: '#E8A33A', i: 'CM', track: ['Achats', 'Identifiants', 'Utilisation'] },
+  { n: 'Woodoku', d: 'Tripledot Studios', c: '#B7794A', i: 'W', track: ['Identifiants', 'Utilisation'] },
+  { n: 'Wordscapes', d: 'PeopleFun', c: '#3E9C7A', i: 'Ws', track: ['Identifiants', 'Utilisation', 'Diagnostics'] }];
+const POST_GAMES = [['Coin Master', '#E8A33A'], ['Woodoku', '#B7794A'], ['Rummikub', '#C9463D'], ['Wordscapes', '#3E9C7A'], ['Bubble Shooter', '#4F7BE0']];
+
+function tile(X, Y, s, col, label) { x.save(); x.translate(X, Y); x.scale(s, s); const g = x.createLinearGradient(-50, -50, 50, 50); g.addColorStop(0, col); g.addColorStop(1, rgba(NIGHT, .9));
+  x.fillStyle = g; rr(-50, -50, 100, 100, 26); x.fill(); x.strokeStyle = rgba(WHITE, .25); x.lineWidth = 2; x.stroke(); txt(label, 0, 2, 38, WHITE, 700); x.restore(); }
+function heart(X, Y, s, col) { x.save(); x.translate(X, Y); x.scale(s, s); x.fillStyle = col; x.beginPath(); x.moveTo(0, 12); x.bezierCurveTo(-26, -6, -14, -26, 0, -12); x.bezierCurveTo(14, -26, 26, -6, 0, 12); x.fill(); x.restore(); }
+function verdict(t, t0, label, col, X, Y, s = 1) {
+  const st = cl(pr(t, t0, t0 + .25)); if (st <= 0) return; const sh = st < 1 ? 0 : Math.max(0, 1 - (t - t0 - .25) * 4) * Math.sin(t * 80) * 6;
+  x.save(); x.translate(X + sh, Y); x.rotate(-.1); const sc = lerp(2, 1, ei(st)) * s; x.scale(sc, sc); x.globalAlpha *= st;
+  font(84, 700, 'SG'); const w = x.measureText(label).width + 90; x.strokeStyle = col; x.lineWidth = 9; rr(-w / 2, -66, w, 132, 16); x.stroke(); x.lineWidth = 3; rr(-w / 2 + 14, -52, w - 28, 104, 10); x.stroke();
+  txt(label, 0, 4, 84, col, 700, 'SG', 'center', 6); x.restore();
+}
+
+// ---------- the viral post (generic card, not Instagram's UI) ----------
+function postCard(t, X, Y, s) {
+  x.save(); x.translate(X, Y); x.scale(s, s); const w = 820, h = 900;
+  x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 70; x.fillStyle = '#0D2550'; rr(-w / 2, -h / 2, w, h, 36); x.fill(); x.shadowBlur = 0; x.strokeStyle = rgba(LIGHT, .3); x.lineWidth = 2; x.stroke();
+  x.fillStyle = rgba(WHITE, .2); x.beginPath(); x.arc(-w / 2 + 70, -h / 2 + 70, 30, 0, 6.28); x.fill(); txt('Post viral', -w / 2 + 120, -h / 2 + 62, 28, WHITE, 700, 'IN', 'left'); txt('publication partagée sur Instagram', -w / 2 + 120, -h / 2 + 94, 20, rgba(ICE, .55), 400, 'IN', 'left');
+  x.fillStyle = '#0A1C3E'; rr(-w / 2 + 30, -h / 2 + 140, w - 60, 470, 24); x.fill();
+  POST_GAMES.forEach(([n, c], i) => { const k = back(cl(pr(t, T.post + .2 + i * .12, T.post + .6 + i * .12))); if (k <= 0) return; const cx = -240 + (i % 3) * 240, cy = -h / 2 + 260 + Math.floor(i / 3) * 220;
+    tile(i > 2 ? cx + 120 : cx, cy, k, c, n.split(' ').map(q => q[0]).join('')); txt(n, i > 2 ? cx + 120 : cx, cy + 82, 22, ICE, 600, 'IN'); });
+  ['« Ces jeux populaires… installés sans', 'consentement… les données qu’ils collectent »'].forEach((l, i) => txt(l, -w / 2 + 40, h / 2 - 230 + i * 40, 28, WHITE, 600, 'IN', 'left'));
+  const lk = Math.floor(12579 * eio(pr(t, T.likes, T.likes + 1.4))); heart(-w / 2 + 60, h / 2 - 90, 1.2, DANGER); txt(lk.toLocaleString('fr-FR') + ' j’aime', -w / 2 + 100, h / 2 - 88, 28, WHITE, 700, 'IN', 'left');
+  txt('227 commentaires', w / 2 - 40, h / 2 - 88, 24, rgba(ICE, .6), 400, 'IN', 'right');
+  x.restore();
+}
+
+// ---------- App Store-style privacy sheet ----------
+function scrPrivacy(t, w, h) {
+  x.fillStyle = ICE; x.fillRect(0, 0, w, h); statusBar(w, '20:14'); x.fillStyle = NIGHT; x.fillRect(0, 0, w, 90); statusBar(w, '20:14');
+  tile(84, 170, .9, GAMES[0].c, 'CM'); txt('Coin Master', 150, 152, 30, NIGHT, 800, 'IN', 'left'); txt('Moon Active', 150, 188, 22, rgba(NIGHT, .55), 400, 'IN', 'left');
+  txt('Confidentialité de l’app', 30, 280, 32, NIGHT, 800, 'IN', 'left');
+  x.fillStyle = WHITE; rr(20, 320, w - 40, 420, 24); x.fill();
+  txt('Données utilisées pour vous suivre', 44, 368, 23, NIGHT, 800, 'IN', 'left');
+  ['sur les apps et sites', 'd’autres entreprises :'].forEach((l, i) => txt(l, 44, 404 + i * 30, 21, rgba(NIGHT, .6), 400, 'IN', 'left'));
+  GAMES[0].track.forEach((r, i) => { const k = eo(pr(t, T.rows[i], T.rows[i] + .35)); if (k <= 0) return; alpha(k, () => { const y = 500 + i * 72;
+    x.fillStyle = rgba(DANGER, .1 + .1 * Math.sin(t * 5 + i)); rr(40, y - 28, w - 80, 56, 14); x.fill(); x.fillStyle = DANGER; x.beginPath(); x.arc(72, y, 10, 0, 6.28); x.fill(); txt(r, 96, y + 1, 28, NIGHT, 700, 'IN', 'left'); }); });
+  txt('Déclaré par l’éditeur, non vérifié par Apple', w / 2, 790, 18, rgba(NIGHT, .5), 600, 'IN');
+}
+
+// ---------- ad-tracking network ----------
+const ADN = Array.from({ length: 7 }, (_, i) => { const a = -2.6 + i * .52; return { x: 540 + Math.cos(a) * 380, y: 1260 + Math.sin(a) * 300 }; });
+function trackNet(t, t0, a) {
+  alpha(a, () => {
+    for (const [i, n] of ADN.entries()) { const k = eo(pr(t, t0 + i * .08, t0 + i * .08 + .4)); if (k <= 0) continue;
+      x.strokeStyle = rgba(DANGER, .35); x.lineWidth = 3; x.beginPath(); x.moveTo(540, 1360); x.lineTo(lerp(540, n.x, k), lerp(1360, n.y, k)); x.stroke();
+      for (let j = 0; j < 3; j++) { const p = ((t - t0) * .9 + j / 3 + i * .1) % 1; x.fillStyle = rgba(AMBER, .9 * Math.sin(p * Math.PI)); x.beginPath(); x.arc(lerp(540, n.x, p), lerp(1360, n.y, p), 6, 0, 6.28); x.fill(); }
+      x.fillStyle = '#1B2F55'; x.beginPath(); x.arc(n.x, n.y, 38 * k, 0, 6.28); x.fill(); x.strokeStyle = DANGER; x.lineWidth = 3; x.stroke(); txt('PUB', n.x, n.y + 1, 18 * k, WHITE, 800, 'IN'); }
+    x.fillStyle = BLUE; x.beginPath(); x.arc(540, 1360, 60, 0, 6.28); x.fill(); txt('TOI', 540, 1362, 30, WHITE, 700);
+  });
+}
+
+// ---------- phone: apps appearing by themselves ----------
+function scrHome(t, w, h) {
+  screenBg(w, h, '#0E2A5C'); statusBar(w, '09:00');
+  const boot = eo(pr(t, T.boot, T.boot + .6)); alpha(boot, () => { txt('Bienvenue', w / 2, 170, 40, WHITE, 700); txt('Galaxy A · configuration terminée', w / 2, 216, 20, rgba(ICE, .6), 400, 'IN'); });
+  const icons = [['Tél.', '#2BD47D'], ['SMS', '#35A7FF'], ['Photo', '#E8A33A'], ['Web', '#4F7BE0']];
+  icons.forEach(([l, c], i) => alpha(boot, () => { tile(80 + i * 96, 330, .7, c, ''); txt(l, 80 + i * 96, 386, 16, ICE, 600, 'IN'); }));
+  ['Jeu ?', 'Appli ?', 'Jeu ?'].forEach((l, i) => { const k = back(cl(pr(t, T.apps[i], T.apps[i] + .4))); if (k <= 0) return;
+    x.save(); x.translate(80 + i * 96, 470); x.scale(k, k); x.fillStyle = rgba(AMBER, .9); rr(-35, -35, 70, 70, 18); x.fill(); txt('?', 0, 2, 40, NIGHT, 700); x.restore(); alpha(cl(k), () => txt(l, 80 + i * 96, 526, 16, AMBER, 600, 'IN')); });
+  const ac = back(cl(pr(t, T.appcloud, T.appcloud + .45))); if (ac > 0) { x.save(); x.translate(w / 2, 690); x.scale(ac, ac);
+    x.fillStyle = rgba(DANGER, .16); rr(-190, -90, 380, 180, 28); x.fill(); x.strokeStyle = DANGER; x.lineWidth = 3; x.stroke();
+    x.fillStyle = DANGER; x.beginPath(); x.arc(-120, 0, 44, 0, 6.28); x.fill();
+    x.fillStyle = WHITE; x.beginPath(); x.arc(-132, 4, 16, 0, 6.28); x.arc(-112, -6, 20, 0, 6.28); x.arc(-96, 6, 14, 0, 6.28); x.fill();
+    txt('AppCloud', -56, -22, 30, WHITE, 800, 'IN', 'left'); txt('préinstallée', -56, 16, 22, rgba(ICE, .8), 400, 'IN', 'left'); txt('impossible à supprimer', -56, 46, 18, DANGER, 700, 'IN', 'left'); x.restore(); }
+}
+
+// ---------- camera ----------
+const CAM = [[0, 0, 0, 1.05], [4.5, 0, 0, 1], [21, 0, 0, 1], [24.4, 0, 60, 1.08], [24.6, 0, 60, 1.14], [27, 0, 0, 1], [46, 0, 0, 1.04]];
+
+function renderAt(t) {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none';
+  const cam = camAt(t, CAM); background(t, cam);
+
+  // ===== HOOK (0–4.5)
+  if (t < T.s1 + .5) {
+    const a = 1 - eio(pr(t, T.s1 - .2, T.s1 + .4)), k = eo(pr(t, T.post, T.post + .8));
+    alpha(a, () => withCam(cam, 1, () => postCard(t, 540, 1150 + (1 - k) * 400, lerp(.8, .98, k))));
+    kinetic('Ce post viral accuse', 540, 290, 64, t, T.hook1, WHITE, { out: T.s1 + .1 });
+    kinetic('tes jeux mobiles.', 540, 375, 64, t, T.hook1 + .4, WHITE, { hl: [1, 2], out: T.s1 + .1 });
+    const v = back(cl(pr(t, T.hook2, T.hook2 + .4))); if (v > 0) alpha(1 - pr(t, T.s1 - .2, T.s1 + .1), () => { x.save(); x.translate(540, 500); x.scale(v, v);
+      x.fillStyle = BLUE; rr(-230, -42, 460, 84, 42); x.fill(); txt('ON A VÉRIFIÉ.', 0, 3, 42, WHITE, 700, 'SG', 'center', 4); x.restore(); });
+  }
+
+  // ===== S1 THE CLAIMS (4.5–9)
+  if (t > T.s1 - .3 && t < T.s2 + .4) {
+    const a = env(t, T.s1 - .2, T.s2 + .3, .4, .45);
+    alpha(a, () => {
+      kinetic('Ce que dit le post :', 540, 330, 64, t, T.said, WHITE);
+      [[T.cA, 'A', 'Ces jeux collectent', 'tes données.'], [T.cB, 'B', 'Des applis s’installent', 'sans ton accord.']].forEach(([tt, L, l1, l2], i) => {
+        const k = eo(pr(t, tt, tt + .55)); if (k <= 0) return; const y = 620 + i * 380;
+        alpha(k, () => { x.save(); x.translate((1 - k) * (i ? 160 : -160), 0); x.fillStyle = rgba(WHITE, .06); rr(90, y - 140, 900, 280, 40); x.fill(); x.strokeStyle = rgba(LIGHT, .35); x.lineWidth = 2; x.stroke();
+          x.fillStyle = LIGHT; x.beginPath(); x.arc(200, y, 66, 0, 6.28); x.fill(); txt(L, 200, y + 4, 72, NIGHT, 700);
+          txt(l1, 300, y - 34, 52, WHITE, 700, 'SG', 'left'); txt(l2, 300, y + 34, 52, WHITE, 700, 'SG', 'left'); x.restore(); }); });
+      alpha(eo(pr(t, T.cB + .6, T.cB + 1)), () => txt('Le post parle aussi de géopolitique : hors de notre sujet ici.', 540, 1430, 28, rgba(ICE, .55), 400, 'IN'));
+    });
+  }
+
+  // ===== S2 CLAIM A (9–21): privacy labels + tracking network → VRAI
+  if (t > T.s2 - .3 && t < T.s3 + .4) {
+    const a = env(t, T.s2 - .2, T.s3 + .3, .4, .45), toCards = eio(pr(t, T.cards - .4, T.cards + .4)), toNet = eio(pr(t, T.track - .3, T.track + .4));
+    alpha(a, () => {
+      kinetic('A · « Ils collectent tes données »', 540, 290, 50, t, T.qA, LIGHT, { out: T.verdictA + 2.3 });
+      alpha(1 - toCards, () => withCam(cam, 1, () => phone(t, scrPrivacy, { s: .98, dy: 60, tilt: Math.sin(t * .7) * .03 })));
+      if (toCards > 0) alpha(toCards * (1 - toNet * .75) * (1 - eo(pr(t, T.verdictA - .5, T.verdictA))), () => GAMES.forEach((g, i) => { const k = back(cl(pr(t, T.cards + i * .15, T.cards + .45 + i * .15))); if (k <= 0) return;
+        x.save(); x.translate(540, 520 + i * 250); x.scale(k, k); x.fillStyle = rgba(WHITE, .07); rr(-440, -105, 880, 210, 30); x.fill(); x.strokeStyle = rgba(LIGHT, .3); x.lineWidth = 2; x.stroke();
+        tile(-350, 0, .9, g.c, g.i); txt(g.n, -270, -52, 36, WHITE, 700, 'SG', 'left'); txt(g.d, -270, -14, 22, rgba(ICE, .55), 400, 'IN', 'left');
+        let cx = -270; g.track.forEach(r => { font(24, 700, 'IN'); const w = x.measureText(r).width + 30; x.fillStyle = rgba(DANGER, .2); rr(cx, 22, w, 46, 12); x.fill(); txt(r, cx + w / 2, 46, 24, WHITE, 700, 'IN'); cx += w + 12; });
+        x.restore(); }));
+      if (toNet > 0) trackNet(t, T.track, toNet);
+      kinetic('« Te suivre » : sur les applis', 540, 1660, 40, t, T.meaning, WHITE, { w: 600, fam: 'IN', out: T.s3 + .1 });
+      kinetic('et sites d’autres entreprises.', 540, 1715, 40, t, T.meaning + .25, WHITE, { w: 600, fam: 'IN', out: T.s3 + .1 });
+      verdict(t, T.verdictA, 'VRAI', GREEN, 540, 470);
+      alpha(eo(pr(t, T.verdictA + .5, T.verdictA + .9)), () => txt('… et c’est écrit sur leur fiche App Store.', 540, 590, 34, WHITE, 600, 'IN'));
+    });
+  }
+
+  // ===== S3 CLAIM B (21–31): pre-installed AppCloud → NUANCÉ
+  if (t > T.s3 - .3 && t < T.s4 + .4) {
+    const a = env(t, T.s3 - .2, T.s4 + .3, .4, .45), side = eio(pr(t, T.facts[0] - .5, T.facts[0] + .2));
+    alpha(a, () => {
+      kinetic('B · « Installées sans ton accord »', 540, 290, 48, t, T.qB, LIGHT, { out: T.s4 + .1 });
+      withCam(cam, 1, () => phone(t, scrHome, { s: lerp(.98, .72, side), dx: lerp(0, 230, side), dy: lerp(60, 320, side), tilt: Math.sin(t * .7) * .03 }));
+      [[T.facts[0], 'Pas ces jeux eux-mêmes.'], [T.facts[1], 'Mais AppCloud, préinstallée sur', 'des Samsung Galaxy A et M'], [T.facts[2], 'Moyen-Orient, Afrique du Nord', 'signalé par SMEX en 2025']].forEach(([tt, l1, l2], i) => {
+        const k = eo(pr(t, tt, tt + .45)); if (k <= 0) return; const y = 520 + i * 190;
+        alpha(k, () => { x.save(); x.translate((1 - k) * -120, 0); x.fillStyle = i ? LIGHT : AMBER; rr(80, y - 46, 10, l2 ? 110 : 60, 5); x.fill();
+          txt(l1, 110, y - 14, 38, WHITE, 700, 'IN', 'left'); if (l2) txt(l2, 110, y + 36, 32, rgba(ICE, .8), 600, 'IN', 'left'); x.restore(); }); });
+      verdict(t, T.verdictB, 'NUANCÉ', AMBER, 320, 1290, .9);
+      alpha(eo(pr(t, T.verdictB + .5, T.verdictB + .9)), () => { txt('Sans écran de consentement,', 320, 1420, 30, WHITE, 600, 'IN'); txt('selon les chercheurs.', 320, 1460, 30, WHITE, 600, 'IN'); });
+    });
+  }
+
+  // ===== S4 PROTECT (31–41.5): settings paths as big "path" cards
+  if (t > T.s4 - .3 && t < T.s5 + .4) {
+    const a = env(t, T.s4 - .2, T.s5 + .3, .35, .4);
+    const R = [
+      ['AVANT D’INSTALLER', 'Lis la fiche', ['iPhone › « Confidentialité de l’app »', 'Android › « Sécurité des données »']],
+      ['IPHONE', 'Bloque le suivi', ['Réglages › Confidentialité', 'et sécurité › Suivi › désactive']],
+      ['ANDROID', 'Efface ton identifiant pub', ['Paramètres › cherche « Annonces »', '› Supprimer l’identifiant publicitaire']],
+      ['TOUJOURS', 'Refuse ce qui ne sert pas', ['Un jeu n’a pas besoin', 'de tes contacts ni de ta position.']]];
+    alpha(a, () => {
+      txt('PROTÈGE-TOI', 540, 290, 34, LIGHT, 700, 'SG', 'center', 6);
+      R.forEach(([tag, title, lines], i) => {
+        const t0 = T.r[i], t1 = T.r[i + 1] ?? T.s5 + .2, k = eo(pr(t, t0, t0 + .5)), out = ei(pr(t, t1 - .35, t1)); if (k <= 0 || out >= 1) return;
+        alpha(k * (1 - out), () => { x.save(); x.translate(0, (1 - k) * 120 - out * 120);
+          x.fillStyle = rgba(WHITE, .06); rr(80, 470, 920, 660, 48); x.fill(); x.strokeStyle = rgba(LIGHT, .35); x.lineWidth = 2; x.stroke();
+          x.fillStyle = BLUE; font(28, 800, 'IN'); const tw = x.measureText(tag).width + 60; rr(540 - tw / 2, 520, tw, 60, 30); x.fill(); txt(tag, 540, 551, 28, WHITE, 800, 'IN', 'center', 2);
+          txt(title, 540, 690, title.length > 22 ? 56 : 66, WHITE, 700);
+          // path steps typed like breadcrumbs
+          const n = pr(t, t0 + .3, t0 + 1.3); lines.forEach((l, j) => { const c = Math.floor(l.length * cl(n * 2 - j * .6)); x.fillStyle = rgba(NIGHT, .55); rr(130, 800 + j * 130, 820, 104, 24); x.fill();
+            txt(l.slice(0, c), 540, 852 + j * 130, 36, j ? ICE : WHITE, 600, 'IN'); });
+          for (let d = 0; d < 4; d++) { x.fillStyle = d <= i ? LIGHT : rgba(WHITE, .2); x.beginPath(); x.arc(540 + (d - 1.5) * 40, 1080, d === i ? 10 : 7, 0, 6.28); x.fill(); }
+          x.restore(); });
+      });
+    });
+  }
+
+  // ===== S5 END (41.5–46)
+  if (t > T.s5 - .2) {
+    const a = eo(pr(t, T.s5 - .1, T.s5 + .4));
+    alpha(a, () => {
+      alpha(.25, () => trackNet(t, T.s5 - 3, 1));
+      x.fillStyle = rgba(NIGHT, .6); x.fillRect(0, 0, W, H);
+      const k = back(cl(pr(t, T.end1, T.end1 + .6)));
+      x.save(); x.translate(540, 700); x.scale(k, k); txt('Gratuit', 0, -70, 120, WHITE, 700); txt('ne veut pas dire', 0, 40, 64, WHITE, 500, 'SG'); txt('sans prix.', 0, 130, 100, LIGHT, 700); x.restore();
+      kinetic('Vérifie tes jeux ce soir. Et partage.', 540, 1010, 42, t, T.end1 + .8, ICE, { w: 600, fam: 'IN' });
+      const lk = pr(t, T.logo, T.logo + 1.0);
+      if (lk > 0) alpha(eo(cl(lk * 3)), () => { x.fillStyle = BLUE; rr(250, 1170, 580, 110, 26); x.fill(); txt(scramble('JIMMY DÉCRYPTE', lk, 5 + Math.floor(t * 15)), 540, 1227, 54, WHITE, 700, 'SG', 'center', 3);
+        txt('La cybersécurité, décryptée pour tout le monde.', 540, 1345, 30, rgba(ICE, .8), 400, 'IN');
+        txt('Sources : fiches App Store (01/11/2026), SMEX, Malwarebytes', 540, 1405, 22, rgba(ICE, .55), 400, 'IN'); });
+    });
+  }
+
+  for (const s of [T.s1, T.s2, T.s3, T.s4, T.s5]) streaks(t, s);
+  if (t > T.appcloud && t < T.appcloud + .3) glitch(t, 1 - pr(t, T.appcloud, T.appcloud + .3), 400 + Math.floor(t * 30));
+  finish(t);
+  const fo = pr(t, T.DUR - .4, T.DUR); if (fo > 0) { x.fillStyle = rgba(NIGHT, fo); x.fillRect(0, 0, W, H); }
+}
+
+function renderCover() {
+  x.setTransform(1, 0, 0, 1, 0, 0); background(2, { x: 0, y: 0, z: 1 });
+  trackNet(20, 15, .9);
+  x.fillStyle = BLUE; rr(330, 240, 420, 70, 35); x.fill(); txt('FACT-CHECK', 540, 277, 34, WHITE, 700, 'SG', 'center', 4);
+  txt('Tes jeux mobiles', 540, 420, 92, WHITE, 700); txt('te suivent ?', 540, 530, 92, WHITE, 700);
+  verdict(9, 0, 'VRAI', GREEN, 540, 720, .9);
+  x.fillStyle = BLUE; rr(350, 1700, 380, 70, 18); x.fill(); txt('JIMMY DÉCRYPTE', 540, 1736, 34, WHITE, 700, 'SG', 'center', 2);
+  finish(0);
+}
+
+window.ready = Promise.all(['700 10px SG', '500 10px SG', '400 10px IN', '600 10px IN', '800 10px IN'].map(f => document.fonts.load(f))).then(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.has('cover')) renderCover(); else renderAt(+(q.get('t') || 0));
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { renderAt(((performance.now() - t0) / 1000) % T.DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script></body></html>
