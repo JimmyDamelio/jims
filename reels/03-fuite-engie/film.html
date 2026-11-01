@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Jimmy Décrypte — Fuite Engie</title>
+<style>
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-700.woff2);font-weight:700}
+@font-face{font-family:SG;src:url(../lib/fonts/spacegrotesk-500.woff2);font-weight:500}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-400.woff2);font-weight:400}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-600.woff2);font-weight:600}
+@font-face{font-family:IN;src:url(../lib/fonts/inter-800.woff2);font-weight:800}
+html,body{margin:0;background:#071B3A}canvas{display:block;width:540px;height:960px}
+</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script src="timeline.js"></script>
+<script src="../lib/kit.js"></script>
+<script>
+// Fictional customer (all values invented)
+const FIELDS = [
+  ['Nom', 'Claire Martin'], ['Adresse', '12 rue des Lilas, Lyon'], ['E-mail', 'claire.m@mail.fr'], ['Téléphone', '06 •• •• 47 18'],
+  ['Identifiant client', '0071 4422 90'], ['N° de contrat', '4401 2387 15'], ['N° de compteur (PDL)', '2214 7790 3816 52']];
+const AMBER = '#FFB547';
+
+// ---------- the customer file card ----------
+function fiche(t, X, Y, s, o = {}) {
+  x.save(); x.translate(X, Y); x.scale(s, s); x.rotate(o.rot || 0);
+  const w = 820, h = 760;
+  x.shadowColor = rgba(o.hot ? DANGER : LIGHT, .35); x.shadowBlur = 70; x.fillStyle = '#0C2754'; rr(-w / 2, -h / 2, w, h, 36); x.fill(); x.shadowBlur = 0;
+  x.strokeStyle = rgba(o.hot ? DANGER : LIGHT, .6); x.lineWidth = 3; x.stroke();
+  x.fillStyle = rgba(o.hot ? DANGER : LIGHT, .16); rr(-w / 2, -h / 2, w, 110, { upperLeft: 36, upperRight: 36, lowerLeft: 0, lowerRight: 0 }); x.fill();
+  txt('FICHE CLIENT', -w / 2 + 44, -h / 2 + 56, 30, WHITE, 700, 'SG', 'left', 4);
+  txt(o.stamp || 'ÉNERGIE · FRANCE', w / 2 - 44, -h / 2 + 56, 22, rgba(ICE, .7), 600, 'IN', 'right', 2);
+  FIELDS.forEach(([k, v], i) => {
+    const t0 = o.times ? o.times[i] : -1, a = o.times ? eo(pr(t, t0, t0 + .35)) : 1; if (a <= 0) return;
+    const y = -h / 2 + 170 + i * 84;
+    alpha(a, () => {
+      x.fillStyle = rgba(WHITE, o.glow === i ? .16 : .05); rr(-w / 2 + 30, y - 34, w - 60, 68, 16); x.fill();
+      txt(k, -w / 2 + 56, y + 1, 26, rgba(ICE, .65), 400, 'IN', 'left');
+      const shown = o.times ? scramble(v, pr(t, t0, t0 + .55), i * 17 + Math.floor(t * 15)) : v;
+      txt(shown, w / 2 - 56, y + 1, 30, WHITE, 700, 'IN', 'right');
+    });
+  });
+  x.restore();
+}
+// data token flying from the file into the message
+function token(t, t0, s, fx, fy, tx2, ty2) {
+  const k = eio(pr(t, t0, t0 + .6)); if (k <= 0 || k >= 1) return;
+  const X = lerp(fx, tx2, k), Y = lerp(fy, ty2, k) - Math.sin(k * Math.PI) * 160;
+  for (let j = 0; j < 8; j++) { const kk = cl(k - j * .025), px = lerp(fx, tx2, kk), py = lerp(fy, ty2, kk) - Math.sin(kk * Math.PI) * 160; x.fillStyle = rgba(AMBER, .25 * (1 - j / 8)); x.beginPath(); x.arc(px, py, 14 - j, 0, 6.28); x.fill(); }
+  font(28, 700, 'IN'); const w = x.measureText(s).width + 36; x.fillStyle = AMBER; rr(X - w / 2, Y - 26, w, 52, 14); x.fill(); txt(s, X, Y + 1, 28, NIGHT, 700, 'IN');
+}
+
+// ---------- icons ----------
+function bolt(X, Y, s, col) { x.save(); x.translate(X, Y); x.scale(s, s); x.fillStyle = col; x.beginPath(); x.moveTo(8, -40); x.lineTo(-22, 6); x.lineTo(0, 6); x.lineTo(-8, 40); x.lineTo(22, -6); x.lineTo(0, -6); x.closePath(); x.fill(); x.restore(); }
+function toolIcon(X, Y, s, col) { x.save(); x.translate(X, Y); x.scale(s, s); x.strokeStyle = col; x.lineWidth = 6; rr(-36, -28, 72, 56, 8); x.stroke(); x.beginPath(); x.moveTo(-36, -12); x.lineTo(36, -12); x.stroke(); x.fillStyle = col; for (let i = 0; i < 3; i++) x.fillRect(-24, -2 + i * 10, 30 + (i % 2) * 14, 5); x.restore(); }
+function maskIcon(X, Y, s, col) { x.save(); x.translate(X, Y); x.scale(s, s); x.fillStyle = col; x.beginPath(); x.ellipse(0, 0, 40, 26, 0, 0, 6.28); x.fill();
+  x.fillStyle = NIGHT; x.beginPath(); x.ellipse(-15, -2, 10, 7, 0, 0, 6.28); x.ellipse(15, -2, 10, 7, 0, 0, 6.28); x.fill(); x.restore(); }
+function rIcon(i, X, Y, k) {
+  x.save(); x.translate(X, Y); x.scale(k, k); x.strokeStyle = WHITE; x.fillStyle = WHITE; x.lineWidth = 9; x.lineCap = 'round'; x.lineJoin = 'round';
+  if (i === 0) { x.beginPath(); x.moveTo(-34, -12); x.lineTo(34, -12); x.moveTo(-34, 14); x.lineTo(34, 14); x.moveTo(18, -40); x.lineTo(-18, 40); x.stroke(); }
+  if (i === 1) { x.beginPath(); x.moveTo(-20, -36); x.lineTo(-20, 30); x.lineTo(-4, 16); x.lineTo(8, 40); x.lineTo(18, 34); x.lineTo(6, 10); x.lineTo(26, 8); x.closePath(); x.stroke(); }
+  if (i === 2) { rr(-40, -26, 80, 52, 8); x.stroke(); x.beginPath(); x.moveTo(-40, -8); x.lineTo(40, -8); x.stroke(); x.strokeStyle = DANGER; x.beginPath(); x.moveTo(-46, 34); x.lineTo(46, -34); x.stroke(); }
+  if (i === 3) handset(0, 0, 1.4, WHITE, 2.36);
+  if (i === 4) { rr(-40, -30, 80, 54, 14); x.stroke(); x.beginPath(); x.moveTo(-16, 24); x.lineTo(-26, 40); x.lineTo(0, 24); x.stroke(); for (let j = -1; j <= 1; j++) { x.beginPath(); x.arc(j * 18, -3, 4, 0, 6.28); x.fill(); } }
+  x.restore();
+}
+
+// ---------- phone screen: an SMS that writes itself with the leaked data ----------
+const MSG = [ // [text, slot index into FIELDS or -1]
+  ['ENGIE : Bonjour ', -1], ['Claire Martin', 0], ['. Contrat ', -1], ['4401 2387 15', 5], [', compteur ', -1], ['2214 7790 3816 52', 6],
+  [' : un remboursement de 84,20 € vous attend. Confirmez votre IBAN ici : ', -1], ['remb-energie.exemple', -2]];
+function scrSms(t, w, h) {
+  screenBg(w, h, '#0A2148'); statusBar(w, '09:12');
+  x.fillStyle = '#0B2550'; x.fillRect(0, 0, w, 180); statusBar(w, '09:12'); avatar(w / 2, 128, 30, 'E', '#2E6FD8'); txt('ENGIE', w / 2, 168, 18, rgba(ICE, .8), 600, 'IN');
+  // reveal the message char by char, field slots light up when their token lands
+  const total = MSG.reduce((a, [s]) => a + s.length, 0), shown = Math.floor(total * pr(t, T.inject[0] - .2, T.typeEnd));
+  font(28, 400, 'IN'); const maxW = 350, lh = 40; let cx = 0, cy = 0, used = 0; const pieces = [];
+  for (const [s, slot] of MSG) for (const word of s.split(/(?<= )/)) {
+    if (used >= shown) break; const part = word.slice(0, Math.max(0, shown - used)); used += word.length;
+    font(28, slot >= 0 || slot === -2 ? 700 : 400, 'IN'); const ww = x.measureText(part).width;
+    if (cx + ww > maxW && cx > 0) { cx = 0; cy += lh; } pieces.push([part, cx, cy, slot]); cx += ww; }
+  const bh = cy + lh + 40; x.fillStyle = '#163A72'; rr(20, 240, maxW + 40, Math.max(80, bh), 24); x.fill();
+  for (const [p, px, py, slot] of pieces) { font(28, slot >= 0 || slot === -2 ? 700 : 400, 'IN');
+    if (slot >= 0) { const lit = env(t, T.inject[{ 0: 0, 5: 1, 6: 2 }[slot]] + .45, T.reveal + 3, .2, .4); x.fillStyle = rgba(AMBER, .35 * lit); rr(40 + px - 3, 262 + py - 4, x.measureText(p).width + 6, 38, 6); x.fill(); }
+    x.fillStyle = slot === -2 ? LIGHT : WHITE; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText(p, 40 + px, 266 + py); }
+  if (shown >= total) txt('09:12', maxW + 50, 240 + bh - 22, 16, rgba(ICE, .5), 400, 'IN', 'right');
+}
+
+// ---------- camera ----------
+const CAM = [[0, 0, 0, 1.06], [4, 0, 0, 1], [12, 0, 0, 1], [20, 0, 0, 1], [25.9, 0, 30, 1.06], [26.1, 0, 30, 1.14], [30.9, 0, 0, 1], [46, 0, 0, 1.04]];
+
+function renderAt(t) {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none';
+  const cam = camAt(t, CAM); background(t, cam);
+
+  // ===== HOOK (0–4)
+  if (t < T.s1 + .5) {
+    const a = 1 - eio(pr(t, T.s1 - .2, T.s1 + .4)), k = eo(pr(t, 0, .9));
+    alpha(a, () => withCam(cam, 1, () => fiche(t, 540, 1180 + (1 - k) * 300, lerp(.7, .95, k), { rot: (1 - k) * -.12 + Math.sin(t) * .01, times: [0, .15, .3, .45, .6, .75, .9].map(v => v + .3), glow: t > T.hook2 ? 5 : -1 })));
+    kinetic('Il connaît ton nom, ton adresse,', 540, 290, 56, t, T.hook1, WHITE, { out: T.s1 + .1 });
+    kinetic('ton n° de contrat…', 540, 370, 56, t, T.hook2, WHITE, { hl: [1, 2, 3], out: T.s1 + .1 });
+    kinetic('Mais ce n’est pas Engie.', 540, 480, 78, t, T.hook3, WHITE, { hl: [4], under: true, out: T.s1 + .1 });
+    const b = back(cl(pr(t, T.badge, T.badge + .4))); if (b > 0) alpha(1 - pr(t, T.s1 - .2, T.s1 + .1), () => { x.save(); x.translate(540, 1690); x.scale(b, b);
+      x.fillStyle = DANGER; rr(-300, -34, 600, 68, 34); x.fill(); txt('FUITE DE DONNÉES · ENGIE', 0, 2, 32, WHITE, 700, 'SG', 'center', 2); x.restore(); });
+  }
+
+  // ===== S1 WHAT HAPPENED (4–12): data pipe diagram
+  if (t > T.s1 - .3 && t < T.s2 + .4) {
+    const a = env(t, T.s1 - .2, T.s2 + .3, .4, .45);
+    alpha(a, () => {
+      kinetic('27 octobre 2026', 540, 280, 40, t, T.s1 + .1, LIGHT, { w: 600, fam: 'IN' });
+      kinetic('Engie confirme une fuite', 540, 360, 64, t, T.s1 + .3, WHITE);
+      kinetic('de données clients.', 540, 440, 64, t, T.s1 + .6, WHITE, { hl: [1, 2] });
+      const A = [270, 780], B = [810, 780], I = [810, 1110];
+      const nk = back(cl(pr(t, T.nodes, T.nodes + .5))), nk2 = back(cl(pr(t, T.nodes + .25, T.nodes + .75)));
+      const hit = pr(t, T.intrude, T.intrude + .5);
+      // pipe A→B with flowing particles
+      x.strokeStyle = rgba(LIGHT, .35 * nk2); x.lineWidth = 6; x.beginPath(); x.moveTo(A[0] + 110, A[1]); x.lineTo(B[0] - 110, B[1]); x.stroke();
+      if (t > T.flow) for (let i = 0; i < 9; i++) { const p = ((t - T.flow) * .6 + i / 9) % 1; x.fillStyle = LIGHT; x.beginPath(); x.arc(lerp(A[0] + 110, B[0] - 110, p), A[1], 7, 0, 6.28); x.fill(); }
+      // intruder B→I, particles stolen downward
+      if (hit > 0) { x.strokeStyle = rgba(DANGER, .7); x.lineWidth = 5; x.setLineDash([16, 12]); x.lineDashOffset = -t * 80; x.beginPath(); x.moveTo(B[0], B[1] + 100); x.lineTo(B[0], lerp(B[1] + 100, I[1] - 90, eo(hit))); x.stroke(); x.setLineDash([]);
+        if (t - T.intrude > .5) for (let i = 0; i < 4; i++) { const p = ((t - T.intrude) * .7 + i / 4) % 1; x.fillStyle = rgba(DANGER, .9 * Math.sin(p * Math.PI)); rr(B[0] + 24, lerp(B[1] + 110, I[1] - 100, p) - 10, 44, 20, 5); x.fill(); } }
+      x.save(); x.translate(A[0], A[1]); x.scale(nk, nk); x.fillStyle = '#0E2D62'; x.beginPath(); x.arc(0, 0, 110, 0, 6.28); x.fill(); x.strokeStyle = LIGHT; x.lineWidth = 4; x.stroke(); bolt(0, -20, 1.2, LIGHT); txt('ENGIE', 0, 52, 32, WHITE, 700); x.restore();
+      x.save(); x.translate(B[0], B[1]); x.scale(nk2, nk2); x.fillStyle = hit > 0 ? rgba(DANGER, .2) : '#0E2D62'; rr(-130, -100, 260, 200, 30); x.fill(); x.strokeStyle = hit > 0 ? DANGER : LIGHT; x.lineWidth = 4; x.stroke();
+      toolIcon(0, -30, 1.1, hit > 0 ? DANGER : LIGHT); txt('Outil d’un', 0, 40, 26, WHITE, 600, 'IN'); txt('partenaire', 0, 72, 26, WHITE, 600, 'IN'); x.restore();
+      txt('prospection commerciale', B[0], B[1] - 130, 24, rgba(ICE, .6 * nk2), 400, 'IN');
+      if (hit > 0) { x.save(); x.translate(I[0], I[1]); x.scale(back(hit), back(hit)); x.fillStyle = rgba(DANGER, .2); x.beginPath(); x.arc(0, 0, 80, 0, 6.28); x.fill(); x.strokeStyle = DANGER; x.lineWidth = 4; x.stroke(); maskIcon(0, -6, 1.1, DANGER); x.restore();
+        txt('Accès inhabituel', I[0], I[1] + 120, 30, DANGER, 700, 'SG'); }
+      txt('Systèmes internes : non touchés', A[0], A[1] + 160, 26, rgba(ICE, .6 * nk), 400, 'IN');
+      // facts chips
+      [[T.c1, 'Clients en France', 1], [T.c2, 'Aucune donnée bancaire', 1], [T.c3, 'Nombre de clients : non communiqué', 0], [T.c4, 'Aucune revendication à ce jour', 0]].forEach(([tt, s, ok], i) => {
+        const k = back(cl(pr(t, tt, tt + .4))); if (k <= 0) return; const y = 1350 + i * 84;
+        x.save(); x.translate(130, y); x.scale(k, k); x.fillStyle = rgba(ok ? LIGHT : AMBER, .14); font(30, 600, 'IN'); const w = x.measureText(s).width + 90; rr(0, -32, w, 64, 32); x.fill();
+        x.strokeStyle = ok ? LIGHT : AMBER; x.lineWidth = 2; x.stroke(); ok ? check(36, 0, 11, 1, LIGHT) : txt('?', 36, 1, 30, AMBER, 700); txt(s, 64, 1, 30, WHITE, 600, 'IN', 'left'); x.restore(); });
+    });
+  }
+
+  // ===== S2 WHAT LEAKED (12–20)
+  if (t > T.s2 - .3 && t < T.s3 + .9) {
+    const a = env(t, T.s2 - .2, T.s3 + .8, .4, .5), go = eio(pr(t, T.s3, T.s3 + .8));
+    alpha(a, () => {
+      kinetic('Ce qui a fuité, selon Engie :', 540, 300, 58, t, T.s2 + .1, WHITE, { out: T.s3 + .1 });
+      kinetic('Tu as reçu un e-mail d’Engie ? Tu es concerné.', 540, 380, 38, t, T.s2 + .6, ICE, { w: 600, fam: 'IN', hl: [6, 7], out: T.s3 + .1 });
+      withCam(cam, 1, () => fiche(t, lerp(540, 540, go), lerp(960, 760, go), lerp(1.12, .62, go), { times: T.f }));
+      const bk = back(cl(pr(t, T.bank, T.bank + .45))); if (bk > 0) alpha(1 - go, () => { x.save(); x.translate(540, 1530); x.scale(bk, bk);
+        x.fillStyle = rgba(WHITE, .06); rr(-420, -70, 840, 140, 30); x.fill(); x.strokeStyle = rgba(OK, .6); x.lineWidth = 2; x.stroke();
+        rIcon(2, -340, 0, .8); txt('Données bancaires :', -270, -18, 32, WHITE, 700, 'IN', 'left'); txt('non concernées, selon Engie', -270, 24, 28, OK, 600, 'IN', 'left'); x.restore(); });
+    });
+  }
+
+  // ===== S3 THE REAL DANGER (20–31): fields fly into a tailor-made SMS
+  if (t > T.s3 - .2 && t < T.s4 + .4) {
+    const a = env(t, T.s3 - .1, T.s4 + .3, .3, .45);
+    alpha(a, () => {
+      kinetic('Le vrai danger :', 540, 280, 58, t, T.dangerTxt, WHITE, { out: T.reveal });
+      kinetic('une arnaque sur mesure.', 540, 360, 64, t, T.dangerTxt + .4, WHITE, { hl: [2, 3], out: T.reveal });
+      withCam(cam, 1, () => {
+        fiche(t, 290, 700, .45, { glow: [0, 5, 6, -1][T.inject.findIndex((v, i) => t >= v && t < (T.inject[i + 1] ?? T.typeEnd))] , hot: t > T.reveal });
+        phone(t, scrSms, { s: .92, dx: 170, dy: 260, tilt: -.06 + Math.sin(t * .7) * .02 });
+        token(t, T.inject[0], 'Claire Martin', 400, 605, 600, 1150);
+        token(t, T.inject[1], '4401 2387 15', 400, 794, 660, 1190);
+        token(t, T.inject[2], '2214 7790 3816 52', 400, 832, 640, 1230);
+      });
+      const tg = back(cl(pr(t, T.tag, T.tag + .4))); if (tg > 0) { x.save(); x.translate(250, 1000); x.rotate(-.06); x.scale(tg, tg); x.strokeStyle = AMBER; x.lineWidth = 4; rr(-170, -56, 340, 112, 18); x.stroke();
+        txt('EXEMPLE FICTIF', 0, -16, 30, AMBER, 700, 'SG', 'center', 2); txt('aucun cas signalé à ce jour', 0, 24, 20, AMBER, 600, 'IN'); x.restore(); }
+      kinetic('Toutes les infos sont vraies.', 540, 280, 60, t, T.rev1, WHITE, { out: T.s4 + .1 });
+      kinetic('Le message est faux.', 540, 370, 76, t, T.rev2, WHITE, { hl: [3], under: true, out: T.s4 + .1 });
+      const g = eo(pr(t, T.goal, T.goal + .5)); if (g > 0) alpha(g * (1 - pr(t, T.s4 - .2, T.s4 + .1)), () => {
+        x.fillStyle = rgba('#020814', .7); rr(110, 1520, 860, 130, 30); x.fill(); txt('Objectif : ton IBAN, ta carte,', 540, 1565, 36, WHITE, 700, 'IN'); txt('tes codes.', 540, 1612, 36, DANGER, 700, 'IN'); });
+    });
+  }
+
+  // ===== S4 REFLEXES (31–41.5): one reflex per beat, full-screen
+  if (t > T.s4 - .3 && t < T.s5 + .4) {
+    const a = env(t, T.s4 - .2, T.s5 + .3, .35, .4);
+    const R = [['Une info exacte', 'ne prouve rien.'], ['Ne clique pas.', 'Tape toi-même l’adresse de ton espace client.'], ['Jamais d’IBAN,', 'de carte ou de code SMS par message.'], ['Un appel ? Raccroche.', 'Rappelle le numéro de ta facture.'], ['SMS douteux ?', 'Transfère-le au 33700.']];
+    alpha(a, () => {
+      txt('LES BONS RÉFLEXES', 540, 290, 32, LIGHT, 700, 'SG', 'center', 6);
+      R.forEach(([l1, l2], i) => {
+        const t0 = T.r[i], t1 = (T.r[i + 1] ?? T.s5 + .2), k = eo(pr(t, t0, t0 + .5)), out = ei(pr(t, t1 - .35, t1));
+        if (k <= 0 || out >= 1) return;
+        alpha(k * (1 - out), () => { x.save(); x.translate((1 - k) * 160 - out * 160, 0);
+          x.fillStyle = i === 4 ? BLUE : rgba(WHITE, .06); rr(90, 560, 900, 760, 50); x.fill(); x.strokeStyle = rgba(LIGHT, .4); x.lineWidth = 2; x.stroke();
+          x.fillStyle = i === 4 ? rgba(WHITE, .18) : rgba(LIGHT, .2); x.beginPath(); x.arc(540, 760, 110, 0, 6.28); x.fill(); rIcon(i, 540, 760, back(cl(pr(t, t0 + .15, t0 + .6))));
+          txt(l1, 540, 990, 70, WHITE, 700);
+          wrap(l2, 780, 44, 600, 'IN').forEach((l, j) => txt(l, 540, 1090 + j * 58, 44, i === 4 ? WHITE : ICE, 600, 'IN'));
+          x.restore(); });
+      });
+      for (let i = 0; i < 5; i++) { const on = t >= T.r[i]; x.fillStyle = on ? LIGHT : rgba(WHITE, .2); x.beginPath(); x.arc(540 + (i - 2) * 40, 1400, on ? 10 : 7, 0, 6.28); x.fill(); }
+    });
+  }
+
+  // ===== S5 END (41.5–46)
+  if (t > T.s5 - .2) {
+    const a = eo(pr(t, T.s5 - .1, T.s5 + .4));
+    alpha(a, () => {
+      alpha(.2, () => fiche(t, 540, 1000, 1.2, { hot: true }));
+      x.fillStyle = rgba(NIGHT, .65); x.fillRect(0, 0, W, H);
+      const k = back(cl(pr(t, T.end1, T.end1 + .6)));
+      x.save(); x.translate(540, 690); x.scale(k, k); txt('Ils ont tes infos.', 0, -60, 92, WHITE, 700); x.restore();
+      const k2 = back(cl(pr(t, T.end2, T.end2 + .6)));
+      x.save(); x.translate(540, 820); x.scale(k2, k2); txt('Pas ta confiance.', 0, 0, 92, LIGHT, 700); x.restore();
+      kinetic('Envoie-le à un proche client d’Engie.', 540, 1010, 42, t, T.end2 + .5, ICE, { w: 600, fam: 'IN' });
+      const lk = pr(t, T.logo, T.logo + 1.0);
+      if (lk > 0) alpha(eo(cl(lk * 3)), () => { x.fillStyle = BLUE; rr(250, 1180, 580, 110, 26); x.fill(); txt(scramble('JIMMY DÉCRYPTE', lk, 5 + Math.floor(t * 15)), 540, 1237, 54, WHITE, 700, 'SG', 'center', 3);
+        txt('La cybersécurité, décryptée pour tout le monde.', 540, 1355, 30, rgba(ICE, .8), 400, 'IN');
+        txt('Sources : Engie via BleepingComputer, Le Monde Informatique, Selectra', 540, 1415, 22, rgba(ICE, .55), 400, 'IN'); });
+    });
+  }
+
+  for (const s of [T.s1, T.s2, T.s3, T.s4, T.s5]) streaks(t, s);
+  if (t > T.intrude && t < T.intrude + .3) glitch(t, 1 - pr(t, T.intrude, T.intrude + .3), 100 + Math.floor(t * 30));
+  flash(t, T.reveal, .25, .35, DANGER);
+  if (t > T.reveal && t < T.reveal + .4) glitch(t, 1 - pr(t, T.reveal, T.reveal + .4), 300 + Math.floor(t * 30));
+  finish(t);
+  const fo = pr(t, T.DUR - .4, T.DUR); if (fo > 0) { x.fillStyle = rgba(NIGHT, fo); x.fillRect(0, 0, W, H); }
+}
+
+function avatar(X, Y, r, letter, col = BLUE) { x.fillStyle = col; x.beginPath(); x.arc(X, Y, r, 0, 6.28); x.fill(); txt(letter, X, Y + 2, r * 1.05, WHITE, 700); }
+
+function renderCover() {
+  x.setTransform(1, 0, 0, 1, 0, 0); background(2, { x: 0, y: 0, z: 1 });
+  fiche(9, 540, 1250, .9, { rot: -.05, hot: true, glow: 5 });
+  x.fillStyle = DANGER; rr(290, 250, 500, 70, 35); x.fill(); txt('FUITE ENGIE', 540, 287, 36, WHITE, 700, 'SG', 'center', 4);
+  txt('Il connaît ton', 540, 440, 100, WHITE, 700); txt('n° de contrat.', 540, 560, 100, WHITE, 700);
+  txt('Ce n’est pas Engie.', 540, 690, 70, LIGHT, 700);
+  x.fillStyle = BLUE; rr(350, 1650, 380, 70, 18); x.fill(); txt('JIMMY DÉCRYPTE', 540, 1686, 34, WHITE, 700, 'SG', 'center', 2);
+  finish(0);
+}
+
+window.ready = Promise.all(['700 10px SG', '500 10px SG', '400 10px IN', '600 10px IN', '800 10px IN'].map(f => document.fonts.load(f))).then(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.has('cover')) renderCover(); else renderAt(+(q.get('t') || 0));
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { renderAt(((performance.now() - t0) / 1000) % T.DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script></body></html>
